@@ -1,0 +1,17 @@
+plugins { id("com.android.application") }
+android {
+    namespace = "com.example.nothingwidgets"
+    compileSdk = 36
+    val releaseStore = System.getenv("NOTHING_KEYSTORE")
+    if (!releaseStore.isNullOrBlank()) {
+        signingConfigs.create("privateRelease") {
+            storeFile = file(releaseStore)
+            storePassword = System.getenv("NOTHING_STORE_PASSWORD")
+            keyAlias = System.getenv("NOTHING_KEY_ALIAS")
+            keyPassword = System.getenv("NOTHING_KEY_PASSWORD")
+        }
+        buildTypes.getByName("release").signingConfig = signingConfigs.getByName("privateRelease")
+    }
+    defaultConfig { applicationId = "com.example.nothingwidgets"; minSdk = 31; targetSdk = 36; versionCode = 7; versionName = "0.7.0" }
+}
+dependencies { implementation("com.google.android.material:material:1.14.0"); implementation("androidx.work:work-runtime:2.12.0"); testImplementation("junit:junit:4.13.2") }

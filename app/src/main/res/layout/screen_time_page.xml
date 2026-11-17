@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/screen_page_root"
+    android:layout_width="match_parent" android:layout_height="180dp">
+    <ImageView android:id="@+id/widget_image"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:background="@android:color/transparent" android:scaleType="fitCenter"
+        android:importantForAccessibility="yes" />
+    <ViewFlipper android:id="@+id/blink_eyes"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:autoStart="true" android:flipInterval="60000"
+        android:inAnimation="@anim/eyes_open" android:outAnimation="@anim/eyes_close"
+        android:importantForAccessibility="noHideDescendants">
+        <ImageView android:id="@+id/eyes_first"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:scaleType="fitCenter" />
+        <ImageView android:id="@+id/eyes_second"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:scaleType="fitCenter" />
+    </ViewFlipper>
+</FrameLayout>

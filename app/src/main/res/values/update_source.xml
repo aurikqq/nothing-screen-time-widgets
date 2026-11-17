@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="update_github_owner" translatable="false">aurikqq</string>
+    <string name="update_github_repository" translatable="false">nothing-screen-time-widgets</string>
+    <string name="update_github_apk_asset" translatable="false">nothing-widgets.apk</string>
+</resources>
