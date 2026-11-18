@@ -1,12 +1,12 @@
 # Nothing Screen Time Widgets
 
-Native **Away Time** and **Screen Time** widgets inspired by Nothing OS, built for Android 12 and later. The app is written in Kotlin and uses Android Views, RemoteViews, and Canvas.
+Native **Away Time** and **Screen Time** widgets from Nothing OS, built for Android 12 and later. The app is written in Kotlin and uses Android Views, RemoteViews, and Canvas.
 
 This is an independent project and is not affiliated with Nothing Technology.
 
 ## Features
 
-- **Away Time:** View your breaks, set a sleep schedule, and explore weekly statistics.
+- **Away Time:** View your breaks, set a sleep schedule, and explore weekly statistics. From NOS 5.0.
 - **Screen Time:** See your daily app usage, set a daily limit, and get a visual indication when you exceed it.
 - Customize individual widget instances and use Material You colors and system font weight settings.
 - Manage permissions, sleep schedule, and daily limit from the app.
@@ -18,7 +18,7 @@ This is an independent project and is not affiliated with Nothing Technology.
 3. Set your sleep schedule and daily screen time limit.
 4. Add the Away Time and Screen Time widgets from your launcher's widget menu.
 
-Swipe vertically on the Screen Time widget to move between its pages.
+Swipe vertically on the Screen Time widget to move between its two pages.
 
 ## How statistics are calculated
 
@@ -34,7 +34,6 @@ You will need JDK 17 or later, Android SDK 36, and access to Google Maven and Ma
 export ANDROID_HOME=/path/to/Android/Sdk
 ./gradlew assembleDebug
 ```
-
 The debug APK is created at `app/build/outputs/apk/debug/app-debug.apk`.
 
 To build a release APK:
@@ -54,3 +53,5 @@ For a personal debug build, you can place the following font files in `app/src/d
 - `NDot-55.otf` — Screen Time display
 
 System fonts are used when these files are absent. Font files are excluded from Git; include them in a release build only if you have the necessary distribution rights.
+
+*This is a project for individual use, so I let myself use AI while creating it, but I can read, understand and change all the code. Just for your info.*
