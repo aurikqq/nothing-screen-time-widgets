@@ -1,97 +1,56 @@
 # Nothing Screen Time Widgets
 
-Нативные виджеты **Away Time** и **Screen Time** в стиле Nothing OS для Android 12+ (API 31). Kotlin, стандартные Android Views, RemoteViews и Canvas. Без root, облака, рекламы и постоянного сервиса. Проект не связан с Nothing Technology.
+Native **Away Time** and **Screen Time** widgets inspired by Nothing OS, built for Android 12 and later. The app is written in Kotlin and uses Android Views, RemoteViews, and Canvas.
 
-## Возможности
+This is an independent project and is not affiliated with Nothing Technology.
 
-- Away Time: интервалы отдыха, расписание сна, недельная статистика и однократная понедельничная сводка.
-- Screen Time: точечный телефон с лицом, моргание, страница со временем, дневной лимит и красное состояние при его превышении.
-- Material You, системная жирность текста, настройка отдельных экземпляров виджета.
-- Один главный экран **Material 3 Expressive**: доступ к статистике, сон, лимит, обновления и диагностика.
-- Проверка GitHub Releases при каждом открытии приложения; плашка с изменениями, прогрессом загрузки и кнопкой установки.
+## Features
 
-## Установка
+- **Away Time:** View your breaks, set a sleep schedule, and explore weekly statistics.
+- **Screen Time:** See your daily app usage, set a daily limit, and get a visual indication when you exceed it.
+- Customize individual widget instances and use Material You colors and system font weight settings.
+- Manage permissions, sleep schedule, and daily limit from the app.
 
-Установите APK, откройте приложение и выдайте **доступ к статистике использования**. Укажите начало/окончание сна и дневной лимит, затем добавьте виджеты через меню рабочего стола. Перенастройка долгим нажатием зависит от лаунчера. Страницы Screen Time листаются вертикально; нажатие их не переключает.
+## Getting started
 
-Обновление поверх APK с той же подписью сохраняет настройки. Debug и release, подписанные разными ключами, несовместимы для обновления поверх друг друга.
+1. Install the APK and open the app.
+2. Grant access to usage statistics.
+3. Set your sleep schedule and daily screen time limit.
+4. Add the Away Time and Screen Time widgets from your launcher's widget menu.
 
-## Как считаются данные
+Swipe vertically on the Screen Time widget to move between its pages.
 
-**Away** объединяет интервалы блокировки, выключенного экрана и выключенного устройства. Учитываются перерывы от **10 минут**, затем их пересечение с бодрствованием. День начинается в момент пробуждения, а не в полночь. Порог применяется до отсечения сна. Часовые пояса и DST обрабатываются через `java.time`.
+## How statistics are calculated
 
-**Screen Time** объединяет интервалы Activity приложений с доступным значком запуска в текущем профиле и вычитает блокировку. Если доступно событие STOPPED, конец интервала берётся из него; иначе из PAUSED. Пересечения приложений не удваивают время. Это методика, приближенная к стоковому Nothing, а не просто время включённого экрана.
+**Away Time** combines intervals when the device is locked, the screen is off, or the device is powered off. Breaks of at least 10 minutes are included, and the result is limited to waking hours. Each day starts at the configured wake-up time.
 
-Если доступ отозван или событий нет, приложение не подставляет выдуманный ноль. История разных версий методики не смешивается. В диагностике доступны исходные события и признаки неполноты.
+**Screen Time** combines activity intervals for apps with a launcher icon in the current profile and excludes time when the device is locked. Overlapping app intervals are counted once.
 
-Отрисовка Away объединяет зазоры до 5 физических пикселей, сохраняет минимальную ширину 2 пикселя и скругление до 2dp. Эти правила меняют только рисунок. Глаза моргают примерно раз в минуту на 160 мс средствами ViewFlipper в лаунчере; фоновый сервис и поминутный опрос не используются.
+## Build
 
-## Сборка
-
-Нужны JDK 17+ (проверено с JDK 21), Android SDK 36 и доступ к Google Maven/Maven Central:
+You will need JDK 17 or later, Android SDK 36, and access to Google Maven and Maven Central.
 
 ```sh
 export ANDROID_HOME=/path/to/Android/Sdk
-./gradlew testDebugUnitTest assembleDebug
+./gradlew assembleDebug
 ```
 
-APK: `app/build/outputs/apk/debug/app-debug.apk`.
+The debug APK is created at `app/build/outputs/apk/debug/app-debug.apk`.
+
+To build a release APK:
 
 ```sh
 ./gradlew assembleRelease
 ```
 
-Без настройки подписи release APK неподписан. Для подписанной сборки задайте переменные окружения и снова выполните `assembleRelease`:
+To sign a release build, configure `NOTHING_KEYSTORE`, `NOTHING_STORE_PASSWORD`, `NOTHING_KEY_ALIAS`, and `NOTHING_KEY_PASSWORD` in your environment.
 
-- `NOTHING_KEYSTORE` — абсолютный путь к вашему постоянному keystore;
-- `NOTHING_STORE_PASSWORD` — пароль хранилища;
-- `NOTHING_KEY_ALIAS` — alias ключа;
-- `NOTHING_KEY_PASSWORD` — пароль ключа.
+## Fonts
 
-Ключ и пароли не должны попадать в Git. Для всех будущих обновлений используйте ту же подпись и увеличивайте `versionCode` в `app/build.gradle.kts`.
+For a personal debug build, you can place the following font files in `app/src/debug/assets/fonts/`:
 
-## Шрифты
+- `NType82-Regular.otf` — Away Time display
+- `NType82-Headline.otf` — additional headline style
+- `NDot-55.otf` — Screen Time display
 
-Оригинальные шрифты не публикуются: права на их распространение не предоставлены. Для личной debug-сборки положите в `app/src/debug/assets/fonts/`:
-
-- `NType82-Regular.otf` — время Away;
-- `NType82-Headline.otf` — дополнительное исходное начертание;
-- `NDot-55.otf` — точечное время Screen Time.
-
-Git игнорирует файлы шрифтов. Без них сборка работает с системными заменами. Для release добавляйте файлы в `app/src/release/assets/fonts/` только при наличии соответствующих прав. Системная настройка жирности применяется к тексту; у единственного начертания NDot используется синтетическое утолщение.
-
-## GitHub Releases и обновления
-
-Источник уже настроен: [aurikqq/nothing-screen-time-widgets](https://github.com/aurikqq/nothing-screen-time-widgets).
-
-Чтобы опубликовать обновление:
-
-1. Увеличьте `versionCode` и `versionName`, соберите APK с постоянной подписью.
-2. Создайте стабильный GitHub Release с числовым тегом, например `v0.8.0`. Не отмечайте его как prerelease.
-3. Прикрепите APK с точным именем **`nothing-widgets.apk`**. GitHub должен предоставить SHA-256 digest asset.
-4. Напишите список изменений в описании релиза — он появится на плашке в приложении.
-
-Плашка предлагается при более новом числовом теге относительно `versionName`. После нажатия APK скачивается и проверяется по SHA-256, размеру, имени пакета, подписи и фактическому большему `versionCode`. Используются только HTTPS и разрешённые хосты GitHub. Установка требует кнопки «Установить» и системного подтверждения Android. Если разрешение источнику не выдано, открываются настройки; после возвращения с разрешением установка продолжается. Проверенная APK сохраняется между запусками. Если релизов нет, ручная проверка сообщает об этом. Дополнительно настроена суточная проверка без автоматической загрузки.
-
-Подробности: [интеграция обновлений](app/src/main/java/com/example/nothingwidgets/update/INTEGRATION.md).
-
-## Проверки и ограничения
-
-- Unit tests покрывают интервалы, питание, блокировку, сон, DST, границы дней/недель, лимиты, шкалу и сравнение версий.
-- На подключённом Nothing A059 пользователь подтвердил совпадение числовых значений с одновременно видимыми стоковыми виджетами после исправления методики.
-- На устройстве проверены загрузка RemoteViews, автоматическое переключение слоёв глаз, интервал 60 секунд, пауза 160 мс, геометрия глаз и загрузка NType. В тесте ожидание переключения ускорено.
-- Новый интерфейс запускается на физическом устройстве. Публичная установка обновления из Releases ещё не проверена: релиз этим изменением не создаётся.
-- `RemoteViews.ListView` не гарантирует фиксацию страницы после жеста. Закрытые OEM-механизмы Nothing и коррекция плавающих окон не используются.
-- WorkManager запрашивает обновление статистики раз в 15 минут, но Android/Doze могут задерживать его. Фоновая актуальность до минуты не гарантируется.
-- Длительная работа через ночные границы, все лаунчеры и OEM-сценарии требуют дополнительной проверки. Не заявляется полное визуальное совпадение на всех устройствах.
-
-Проверка механизма моргания без дополнительных библиотек (личная debug-сборка со шрифтами):
-
-```sh
-./gradlew assembleDebugAndroidTest
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-adb shell am instrument -w com.example.nothingwidgets.test/com.example.nothingwidgets.WidgetUiChecks
-```
-
-Локальные диагностические материалы, оригинальные APK, резервные копии, шрифты и ключи исключены из публикации.
+System fonts are used when these files are absent. Font files are excluded from Git; include them in a release build only if you have the necessary distribution rights.
