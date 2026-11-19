@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.core
+package com.aurikqq.noswidgets.core
 import org.junit.Assert.*
 import org.junit.Test
 class LimitTest {

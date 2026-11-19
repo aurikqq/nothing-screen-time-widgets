@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.debug
+package com.aurikqq.noswidgets.debug
 
 import android.app.Activity
 import android.os.Bundle
@@ -9,8 +9,8 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import com.example.nothingwidgets.render.WidgetRenderer as R
-import com.example.nothingwidgets.weekly.WeeklyAwayActivity
+import com.aurikqq.noswidgets.render.WidgetRenderer as R
+import com.aurikqq.noswidgets.weekly.WeeklyAwayActivity
 import java.time.LocalDate
 import java.time.DayOfWeek
 import java.time.temporal.TemporalAdjusters
@@ -20,7 +20,7 @@ class PreviewActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         intent.getStringExtra("pin")?.let { type ->
-            val provider = if (type == "screen") com.example.nothingwidgets.widget.ScreenTimeWidgetProvider::class.java else com.example.nothingwidgets.widget.AwayWidgetProvider::class.java
+            val provider = if (type == "screen") com.aurikqq.noswidgets.widget.ScreenTimeWidgetProvider::class.java else com.aurikqq.noswidgets.widget.AwayWidgetProvider::class.java
             android.appwidget.AppWidgetManager.getInstance(this).requestPinAppWidget(android.content.ComponentName(this, provider), null, null)
             finish()
             return

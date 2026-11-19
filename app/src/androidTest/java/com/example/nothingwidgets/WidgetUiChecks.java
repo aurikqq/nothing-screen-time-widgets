@@ -1,4 +1,4 @@
-package com.example.nothingwidgets;
+package com.aurikqq.noswidgets;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -12,7 +12,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.RemoteViews;
 import android.widget.ViewFlipper;
-import com.example.nothingwidgets.render.WidgetRenderer;
+import com.aurikqq.noswidgets.render.WidgetRenderer;
 
 /** Framework-only device checks: no test library or test data in the release app. */
 public final class WidgetUiChecks extends Instrumentation {
@@ -23,7 +23,7 @@ public final class WidgetUiChecks extends Instrumentation {
         final ViewFlipper[] eyes = new ViewFlipper[1];
         Activity activity = null;
         try {
-            activity = startActivitySync(new Intent().setClassName(getTargetContext(), "com.example.nothingwidgets.ui.MainActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            activity = startActivitySync(new Intent().setClassName(getTargetContext(), "com.aurikqq.noswidgets.ui.MainActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             final Activity host = activity;
             runOnMainSync(() -> {
                 RemoteViews remote = new RemoteViews(host.getPackageName(), R.layout.screen_time_page);

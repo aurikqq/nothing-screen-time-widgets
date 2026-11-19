@@ -1,6 +1,6 @@
-package com.example.nothingwidgets.data
+package com.aurikqq.noswidgets.data
 
-import com.example.nothingwidgets.core.*
+import com.aurikqq.noswidgets.core.*
 import java.time.*
 import org.junit.Assert.*
 import org.junit.Test

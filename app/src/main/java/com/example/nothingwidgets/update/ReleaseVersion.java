@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.update;
+package com.aurikqq.noswidgets.update;
 
 import java.math.BigInteger;
 import java.util.regex.Matcher;

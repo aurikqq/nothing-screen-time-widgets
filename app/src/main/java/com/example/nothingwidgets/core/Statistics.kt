@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.core
+package com.aurikqq.noswidgets.core
 
 import java.time.*
 import java.time.temporal.TemporalAdjusters

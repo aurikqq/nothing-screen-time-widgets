@@ -9,6 +9,6 @@
     android:updatePeriodMillis="1800000"
     android:resizeMode="horizontal|vertical"
     android:initialLayout="@layout/away_widget"
-    android:configure="com.example.nothingwidgets.ui.MainActivity"
+    android:configure="com.aurikqq.noswidgets.ui.MainActivity"
     android:widgetFeatures="reconfigurable|configuration_optional"
     android:widgetCategory="home_screen" />

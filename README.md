@@ -16,13 +16,13 @@ This is an independent project and is not affiliated with Nothing Technology.
 1. Install the APK and open the app.
 2. Grant access to usage statistics.
 3. Set your sleep schedule and daily screen time limit.
-4. Add the Away Time and Screen Time widgets from your launcher's widget menu.
+4. Add the Away Time and Screen Time widgets using the app buttons or your launcher's widget menu.
 
 Swipe vertically on the Screen Time widget to move between its two pages.
 
 ## How statistics are calculated
 
-**Away Time** combines intervals when the device is locked, the screen is off, or the device is powered off. Breaks of at least 10 minutes are included, and the result is limited to waking hours. Each day starts at the configured wake-up time.
+**Away Time** combines intervals when the device is locked, the screen is off, or the device is powered off. Breaks of any duration are included, and the result is limited to waking hours. Unknown intervals are not guessed. Each day starts at the configured wake-up time.
 
 **Screen Time** combines activity intervals for apps with a launcher icon in the current profile and excludes time when the device is locked. Overlapping app intervals are counted once.
 

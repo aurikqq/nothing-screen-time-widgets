@@ -1,8 +1,9 @@
-package com.example.nothingwidgets.ui
+package com.aurikqq.noswidgets.ui
 
 import android.app.TimePickerDialog
 import android.appwidget.AppWidgetManager
 import android.content.Intent
+import android.content.ComponentName
 import android.os.Bundle
 import android.text.InputType
 import android.view.Gravity
@@ -13,11 +14,11 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.example.nothingwidgets.background.scheduleRefresh
-import com.example.nothingwidgets.background.updateWidgets
-import com.example.nothingwidgets.data.SettingsStore
-import com.example.nothingwidgets.data.UsageSource
-import com.example.nothingwidgets.update.UpdateController
+import com.aurikqq.noswidgets.background.scheduleRefresh
+import com.aurikqq.noswidgets.background.updateWidgets
+import com.aurikqq.noswidgets.data.SettingsStore
+import com.aurikqq.noswidgets.data.UsageSource
+import com.aurikqq.noswidgets.update.UpdateController
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.DynamicColors
@@ -79,19 +80,24 @@ class MainActivity : AppCompatActivity() {
         }
         setContentView(scroll)
         scroll.requestApplyInsets()
-        label(root, "ВАШ РИТМ", 12f, color(androidx.appcompat.R.attr.colorPrimary)).apply { letterSpacing = .14f }
-        label(root, "Nothing Widgets", 34f).apply { typeface = android.graphics.Typeface.create(android.graphics.Typeface.SANS_SERIF, 650, false) }
-        label(root, "Меньше отвлечений. Больше времени для себя.", 15f, color(M.attr.colorOnSurfaceVariant))
+        label(root, "NOS Widgets", 34f).apply { typeface = android.graphics.Typeface.create(android.graphics.Typeface.SANS_SERIF, 650, false) }
         createUpdateBanner()
         val access = UsageSource(this).hasAccess()
         card(if (access) M.attr.colorSecondaryContainer else M.attr.colorTertiaryContainer) { box ->
             label(box, if (access) "✓ Всё готово к работе" else "Разрешите доступ к статистике", 22f,
                 color(if (access) M.attr.colorOnSecondaryContainer else M.attr.colorOnTertiaryContainer))
-            label(box, "Данные остаются на телефоне. Доступ нужен для подсчёта времени в приложениях и перерывов.", 14f)
+            label(box, "Данные остаются на телефоне. Доступ нужен для подсчёта времени в приложениях и перерывов.", 14f, color(if (access) M.attr.colorOnSecondaryContainer else M.attr.colorOnTertiaryContainer))
             action(box, if (access) "Управлять доступом" else "Предоставить доступ", primary = !access) {
                 try { startActivity(UsageSource(this).permissionIntent()) }
                 catch (_: android.content.ActivityNotFoundException) { notice("Системный экран настроек недоступен.") }
             }
+        }
+        card { box ->
+            label(box, "Добавить виджеты", 22f)
+            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            box.addView(row)
+            action(row, "Away Time", weight = true) { pinWidget(com.aurikqq.noswidgets.widget.AwayWidgetProvider::class.java) }
+            action(row, "Screen Time", weight = true) { pinWidget(com.aurikqq.noswidgets.widget.ScreenTimeWidgetProvider::class.java) }
         }
         card { box ->
             label(box, "Away Time", 25f)
@@ -100,17 +106,16 @@ class MainActivity : AppCompatActivity() {
             box.addView(row)
             action(row, "Сон\n${format(settings.sleepStartMinute)}", weight = true) { timePicker(settings.sleepStartMinute) { settings.sleepStartMinute = it; changed() } }
             action(row, "Пробуждение\n${format(settings.sleepEndMinute)}", weight = true) { timePicker(settings.sleepEndMinute) { settings.sleepEndMinute = it; changed() } }
-            label(box, "Учитываются перерывы от 10 минут. Новый день начинается после пробуждения.", 13f, color(M.attr.colorOnSurfaceVariant))
+            label(box, "Новый день начинается после пробуждения.", 13f, color(M.attr.colorOnSurfaceVariant))
         }
         card { box ->
             label(box, "Screen Time", 25f)
             label(box, "Ваш ежедневный ориентир", 14f, color(M.attr.colorOnSurfaceVariant))
             val limit = if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) settings.limitMinutes else settings.limitForWidget(widgetId)
             action(box, "${limit / 60} ч ${limit % 60} мин   ·   Изменить лимит", primary = true) { changeLimit(limit) }
-            label(box, "При превышении лимита виджет станет красным. Страницы переключаются вертикальным жестом.", 13f, color(M.attr.colorOnSurfaceVariant))
+            label(box, "Пролистните виджет вниз, чтобы увидеть экранное время.", 13f, color(M.attr.colorOnSurfaceVariant))
         }
         card { box ->
-            label(box, "Приложение", 22f)
             action(box, "Проверить обновления") { UpdateController.checkManual(this) }
             action(box, "Уведомления об обновлениях") { UpdateController.explainAndRequestNotifications(this) }
             action(box, "Диагностика расчёта") { diagnostics() }
@@ -160,21 +165,69 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun changeLimit(current: Int) {
-        val input = EditText(this).apply { inputType = InputType.TYPE_CLASS_NUMBER; setText(current.toString()); selectAll(); setPadding(dp(24), dp(12), dp(24), dp(12)) }
-        MaterialAlertDialogBuilder(this).setTitle("Лимит в минутах").setMessage("От 1 до 1440 минут в день").setView(input).setNegativeButton("Отмена", null)
-            .setPositiveButton("Сохранить") { _, _ ->
-                val minutes = input.text.toString().toIntOrNull()
-                if (minutes != null && minutes in 1..1440) {
-                    if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) settings.limitMinutes = minutes else settings.setWidgetLimit(widgetId, minutes)
-                    changed()
-                } else notice("Укажите число от 1 до 1440.")
-            }.show()
+        val fields = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(dp(24), 0, dp(24), 0) }
+        fun field(hintText: String, value: Int): EditText = EditText(this).apply {
+            hint = hintText; inputType = InputType.TYPE_CLASS_NUMBER; setText(value.toString())
+            contentDescription = hintText
+            fields.addView(this, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        }
+        val hours = field("Часы", current / 60)
+        val minutes = field("Минуты", current % 60)
+        val dialog = MaterialAlertDialogBuilder(this).setTitle("Дневной лимит")
+            .setMessage("От 1 минуты до 24 часов").setView(fields).setNegativeButton("Отмена", null)
+            .setPositiveButton("Сохранить", null).create()
+        dialog.setOnShowListener {
+            dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+                val h = hours.text.toString().toIntOrNull()
+                val m = minutes.text.toString().toIntOrNull()
+                if (h == null || m == null || h !in 0..24 || m !in 0..59 || h * 60 + m !in 1..1440) {
+                    minutes.error = "Укажите от 1 минуты до 24 часов"
+                } else {
+                    val total = h * 60 + m
+                    if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) settings.limitMinutes = total else settings.setWidgetLimit(widgetId, total)
+                    dialog.dismiss(); changed()
+                }
+            }
+        }
+        dialog.show()
+    }
+
+    private fun pinWidget(provider: Class<*>) {
+        val manager = AppWidgetManager.getInstance(this)
+        try {
+            if (!manager.isRequestPinAppWidgetSupported || !manager.requestPinAppWidget(ComponentName(this, provider), null, null)) {
+                notice("Этот рабочий стол не поддерживает добавление из приложения. Добавьте виджет через меню рабочего стола.")
+            }
+        } catch (_: IllegalStateException) {
+            notice("Не удалось открыть добавление виджета. Попробуйте через меню рабочего стола.")
+        } catch (_: SecurityException) {
+            notice("Не удалось открыть добавление виджета. Попробуйте через меню рабочего стола.")
+        }
     }
     private fun diagnostics() {
-        val summary = com.example.nothingwidgets.data.StatisticsRepository(this).diagnosticSummary()
-        MaterialAlertDialogBuilder(this).setTitle("Диагностика расчёта").setMessage(summary).setNeutralButton("Копировать") { _, _ ->
-            getSystemService(android.content.ClipboardManager::class.java).setPrimaryClip(android.content.ClipData.newPlainText("Диагностика расчёта", summary))
-        }.setPositiveButton("Готово", null).show()
+        try {
+            val summary = com.aurikqq.noswidgets.data.StatisticsRepository(this).diagnosticSummary()
+            val directory = java.io.File(cacheDir, "diagnostics")
+            if (!directory.isDirectory && !directory.mkdirs()) throw java.io.IOException("Cannot create diagnostics directory")
+            val cutoff = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000
+            directory.listFiles()?.filter { it.isFile && it.lastModified() < cutoff }?.forEach { it.delete() }
+            val file = java.io.File.createTempFile("nos-diagnostics-", ".txt", directory)
+            file.writeText(summary, Charsets.UTF_8)
+            val uri = androidx.core.content.FileProvider.getUriForFile(this, "$packageName.diagnostics", file)
+            val share = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                clipData = android.content.ClipData.newRawUri("Диагностика", uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(share, "Отправить диагностику"))
+        } catch (_: java.io.IOException) {
+            notice("Не удалось создать файл диагностики. Проверьте доступное место и попробуйте снова.")
+        } catch (_: android.content.ActivityNotFoundException) {
+            notice("Не найдено приложение для отправки файла.")
+        } catch (_: IllegalArgumentException) {
+            notice("Не удалось подготовить файл диагностики.")
+        }
     }
     private fun notice(message: String) { MaterialAlertDialogBuilder(this).setMessage(message).setPositiveButton("ОК", null).show() }
     private fun changed() { updateWidgets(this); buildUi() }

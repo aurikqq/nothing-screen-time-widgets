@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.update;
+package com.aurikqq.noswidgets.update;
 
 import android.app.Notification;
 import android.app.NotificationManager;

@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.weekly
+package com.aurikqq.noswidgets.weekly
 import java.time.LocalDate
 import org.junit.Assert.*
 import org.junit.Test

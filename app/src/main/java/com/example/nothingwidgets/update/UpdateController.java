@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.update;
+package com.aurikqq.noswidgets.update;
 
 import android.Manifest;
 import android.app.Activity;
@@ -248,7 +248,7 @@ public final class UpdateController {
         WorkManager.getInstance(context).enqueueUniquePeriodicWork("github-release-check", ExistingPeriodicWorkPolicy.KEEP, work);
     }
     public static void explainAndRequestNotifications(Activity activity) {
-        new AlertDialog.Builder(activity).setTitle("Уведомления об обновлениях").setMessage("Разрешить уведомления о новых версиях? Проверка при открытии приложения работает и без них.")
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity).setTitle("Уведомления об обновлениях").setMessage("Разрешить уведомления о новых версиях? Проверка при открытии приложения работает и без них.")
                 .setNegativeButton("Не сейчас", null).setPositiveButton("Разрешить", (dialog, which) -> {
                     ensureChannel(activity);
                     if (Build.VERSION.SDK_INT >= 33 && activity.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)

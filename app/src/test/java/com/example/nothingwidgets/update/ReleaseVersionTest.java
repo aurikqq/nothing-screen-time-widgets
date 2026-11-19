@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.update;
+package com.aurikqq.noswidgets.update;
 
 import org.junit.Test;
 import static org.junit.Assert.*;

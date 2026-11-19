@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.data
+package com.aurikqq.noswidgets.data
 
 import android.app.AppOpsManager
 import android.app.usage.UsageEvents
@@ -9,11 +9,11 @@ import android.os.Build
 import android.os.Process
 import android.os.UserManager
 import android.provider.Settings
-import com.example.nothingwidgets.core.ActivityEvent
-import com.example.nothingwidgets.core.ActivityEventType
+import com.aurikqq.noswidgets.core.ActivityEvent
+import com.aurikqq.noswidgets.core.ActivityEventType
 import android.content.pm.LauncherApps
-import com.example.nothingwidgets.core.ScreenEvent
-import com.example.nothingwidgets.core.ScreenEventType
+import com.aurikqq.noswidgets.core.ScreenEvent
+import com.aurikqq.noswidgets.core.ScreenEventType
 import java.time.Duration
 import java.time.Instant
 

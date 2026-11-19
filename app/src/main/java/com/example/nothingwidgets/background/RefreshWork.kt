@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.background
+package com.aurikqq.noswidgets.background
 
 import android.appwidget.AppWidgetManager
 import android.content.BroadcastReceiver
@@ -6,8 +6,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import androidx.work.*
-import com.example.nothingwidgets.widget.AwayWidgetProvider
-import com.example.nothingwidgets.widget.ScreenTimeWidgetProvider
+import com.aurikqq.noswidgets.widget.AwayWidgetProvider
+import com.aurikqq.noswidgets.widget.ScreenTimeWidgetProvider
 import java.util.concurrent.TimeUnit
 
 class RefreshWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
@@ -30,7 +30,7 @@ fun scheduleRefresh(context: Context) {
 }
 class SystemChangeReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_TIME_CHANGED) com.example.nothingwidgets.data.StatisticsRepository(context).markClockUncertain()
+        if (intent.action == Intent.ACTION_TIME_CHANGED) com.aurikqq.noswidgets.data.StatisticsRepository(context).markClockUncertain()
         scheduleRefresh(context)
         WorkManager.getInstance(context).enqueueUniqueWork("widget-refresh-now", ExistingWorkPolicy.REPLACE,
             OneTimeWorkRequestBuilder<RefreshWorker>().build())

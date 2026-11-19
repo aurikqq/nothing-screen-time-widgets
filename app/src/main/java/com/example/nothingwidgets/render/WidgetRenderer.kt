@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.render
+package com.aurikqq.noswidgets.render
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -77,9 +77,9 @@ object WidgetRenderer {
             p.color = palette.accent
             val trackPixels = (data.displaySidePixels * 464.0 / 564.0).coerceAtLeast(1.0)
             val segments = data.awayIntervals.map {
-                com.example.nothingwidgets.core.AwayTimeline.Segment(it.start.toDouble(),it.end.toDouble())
+                com.aurikqq.noswidgets.core.AwayTimeline.Segment(it.start.toDouble(),it.end.toDouble())
             }
-            for (bar in com.example.nothingwidgets.core.AwayTimeline.stockBars(segments,trackPixels)) {
+            for (bar in com.aurikqq.noswidgets.core.AwayTimeline.stockBars(segments,trackPixels)) {
                 val left=50f+464f*bar.start.toFloat()
                 val right=50f+464f*bar.end.toFloat()
                 val radius=min(2f*data.displayDensity*564f/data.displaySidePixels.coerceAtLeast(1f),(right-left)/2f)

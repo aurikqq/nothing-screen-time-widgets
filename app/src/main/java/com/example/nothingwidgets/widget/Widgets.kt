@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.widget
+package com.aurikqq.noswidgets.widget
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -13,12 +13,12 @@ import android.util.SizeF
 import android.os.Bundle
 import android.util.Log
 import android.widget.RemoteViews
-import com.example.nothingwidgets.R
-import com.example.nothingwidgets.background.scheduleRefresh
-import com.example.nothingwidgets.data.DailySnapshot
-import com.example.nothingwidgets.data.SettingsStore
-import com.example.nothingwidgets.data.StatisticsRepository
-import com.example.nothingwidgets.render.WidgetRenderer
+import com.aurikqq.noswidgets.R
+import com.aurikqq.noswidgets.background.scheduleRefresh
+import com.aurikqq.noswidgets.data.DailySnapshot
+import com.aurikqq.noswidgets.data.SettingsStore
+import com.aurikqq.noswidgets.data.StatisticsRepository
+import com.aurikqq.noswidgets.render.WidgetRenderer
 import java.util.concurrent.Executors
 import java.time.LocalDate
 import java.time.Instant
@@ -97,7 +97,7 @@ abstract class StatisticsWidgetProvider : AppWidgetProvider() {
         val view = RemoteViews(context.packageName, R.layout.away_widget)
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now(zone)
-        val axis = com.example.nothingwidgets.core.AwayTimeline(data?.awayAxisDate ?: com.example.nothingwidgets.core.AwakeWindow.at(Instant.now(),zone,SettingsStore(context).sleep()).date, zone, SettingsStore(context).sleep())
+        val axis = com.aurikqq.noswidgets.core.AwayTimeline(data?.awayAxisDate ?: com.aurikqq.noswidgets.core.AwakeWindow.at(Instant.now(),zone,SettingsStore(context).sleep()).date, zone, SettingsStore(context).sleep())
         val intervals = axis.segments(data?.awayIntervals.orEmpty()).map {
             WidgetRenderer.Interval(it.start.toFloat(), it.end.toFloat())
         }
@@ -108,14 +108,14 @@ abstract class StatisticsWidgetProvider : AppWidgetProvider() {
         val bitmap = WidgetRenderer.away(BITMAP_SIZE, BITMAP_SIZE,
             WidgetRenderer.AwayData(data?.awayMillis?.div(60_000L), intervals,
                 nowFraction = axis.fraction(Instant.now()).toFloat(),
-                monday = com.example.nothingwidgets.weekly.WeeklyInsightStore.pending(context),
+                monday = com.aurikqq.noswidgets.weekly.WeeklyInsightStore.pending(context),
                 partial = data?.awayPartial ?: false, displaySidePixels=sideDp*density, displayDensity=density),
             palette = widgetPalette(context), fonts = widgetFonts(context))
         view.setImageViewBitmap(R.id.widget_image, bitmap)
         view.setContentDescription(R.id.widget_image,
             summary("Away", data?.awayMillis, data?.awayPartial ?: false) + ". Tap for weekly statistics")
         val intent = Intent().setClassName(context.packageName,
-            "com.example.nothingwidgets.weekly.WeeklyAwayActivity")
+            "com.aurikqq.noswidgets.weekly.WeeklyAwayActivity")
         val tap = PendingIntent.getActivity(context, 0, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         view.setOnClickPendingIntent(R.id.widget_image, tap)
@@ -127,7 +127,7 @@ abstract class StatisticsWidgetProvider : AppWidgetProvider() {
         val limit = SettingsStore(context).limitForWidget(id)
         val partial = data?.screenPartial ?: false
         val screen = WidgetRenderer.ScreenData(data?.screenMillis?.div(60_000L), limit.toLong(),
-            overLimit = com.example.nothingwidgets.core.limitExceeded(data?.screenMillis, limit),
+            overLimit = com.aurikqq.noswidgets.core.limitExceeded(data?.screenMillis, limit),
             partial = partial)
         val background = WidgetRenderer.screenBackground(128, 128, screen, palette)
         val pageOrder = listOf(WidgetRenderer.ScreenPage.FACE, WidgetRenderer.ScreenPage.TIME)
@@ -142,8 +142,10 @@ abstract class StatisticsWidgetProvider : AppWidgetProvider() {
         }
         val eyes = WidgetRenderer.screenEyes(BITMAP_SIZE, BITMAP_SIZE, palette)
         val rootLayout = R.layout.screen_time_widget
-        fun layout(heightDp: Float): RemoteViews {
+        fun layout(sideDp: Float): RemoteViews {
             val view = RemoteViews(context.packageName, rootLayout)
+            view.setViewLayoutWidth(R.id.screen_square, sideDp, TypedValue.COMPLEX_UNIT_DIP)
+            view.setViewLayoutHeight(R.id.screen_square, sideDp, TypedValue.COMPLEX_UNIT_DIP)
             view.setImageViewBitmap(R.id.screen_background, background)
             val items = RemoteViews.RemoteCollectionItems.Builder()
                 .setHasStableIds(true).setViewTypeCount(1)
@@ -153,7 +155,7 @@ abstract class StatisticsWidgetProvider : AppWidgetProvider() {
                 val item = RemoteViews(context.packageName, R.layout.screen_time_page)
                 // ListView measures rows without a fixed parent height: match_parent alone
                 // cannot make a viewport-sized row. Host-reported options are in dp.
-                item.setViewLayoutHeight(R.id.screen_page_root, heightDp, TypedValue.COMPLEX_UNIT_DIP)
+                item.setViewLayoutHeight(R.id.screen_page_root, sideDp, TypedValue.COMPLEX_UNIT_DIP)
                 item.setViewVisibility(R.id.blink_eyes, if (face && data?.screenMillis != null) android.view.View.VISIBLE else android.view.View.GONE)
                 item.setImageViewBitmap(R.id.eyes_first, eyes)
                 item.setImageViewBitmap(R.id.eyes_second, eyes)
@@ -176,14 +178,14 @@ abstract class StatisticsWidgetProvider : AppWidgetProvider() {
         val view = if (sizes.isNotEmpty()) {
             // API 31+: the launcher chooses its actual viewport variant, including rotation.
             // Bitmaps are shared across variants; only each row's dp height differs.
-            RemoteViews(sizes.associateWith { layout(it.height) })
+            RemoteViews(sizes.associateWith { layout(minOf(it.width, it.height)) })
         } else {
             val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
             val heightKey = if (landscape) AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT
                 else AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT
             val height = options.getInt(heightKey,
                 options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 180)).coerceAtLeast(1)
-            layout(height.toFloat())
+            layout(minOf(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 180), height).coerceAtLeast(1).toFloat())
         }
         // Full update replaces old bitmaps. No automatic selection or timer is installed.
         manager.updateAppWidget(id, view)

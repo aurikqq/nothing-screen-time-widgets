@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.weekly
+package com.aurikqq.noswidgets.weekly
 
 import android.content.Context
 import android.graphics.*

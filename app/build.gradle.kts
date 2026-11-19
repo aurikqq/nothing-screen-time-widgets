@@ -1,6 +1,6 @@
 plugins { id("com.android.application") }
 android {
-    namespace = "com.example.nothingwidgets"
+    namespace = "com.aurikqq.noswidgets"
     compileSdk = 36
     val releaseStore = System.getenv("NOTHING_KEYSTORE")
     if (!releaseStore.isNullOrBlank()) {
@@ -12,6 +12,6 @@ android {
         }
         buildTypes.getByName("release").signingConfig = signingConfigs.getByName("privateRelease")
     }
-    defaultConfig { applicationId = "com.example.nothingwidgets"; minSdk = 31; targetSdk = 36; versionCode = 7; versionName = "0.7.0" }
+    defaultConfig { applicationId = "com.aurikqq.noswidgets"; minSdk = 31; targetSdk = 36; versionCode = 9; versionName = "0.9.0" }
 }
 dependencies { implementation("com.google.android.material:material:1.14.0"); implementation("androidx.work:work-runtime:2.12.0"); testImplementation("junit:junit:4.13.2") }

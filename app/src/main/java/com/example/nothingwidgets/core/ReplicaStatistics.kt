@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.core
+package com.aurikqq.noswidgets.core
 
 import java.time.*
 
@@ -40,33 +40,28 @@ data class AwakeWindow(val date: LocalDate,val start: Instant,val end: Instant,v
  }
 }
 
-data class AwayResult(val window: AwakeWindow,val intervals:List<Interval>,val totalMillis:Long)
+data class AwayResult(val window: AwakeWindow, val intervals: List<Interval>, val totalMillis: Long, val unknownMillis: Long)
 object ReplicaAway {
- fun calculate(events: List<ScreenEvent>,now:Instant,zone:ZoneId,sleep:SleepSchedule,minimum:Duration=Duration.ofMinutes(10)):AwayResult {
-  val window=AwakeWindow.at(now,zone,sleep)
-  val until=minOf(now,window.cycleEnd)
-  val observed=events.filter{it.timestamp>=window.start.minusSeconds(1800) && it.timestamp<=until}.sortedBy{it.timestamp}
-  val firstBoot=observed.filter{it.type==ScreenEventType.DEVICE_STARTUP && it.timestamp>=window.start}.minOfOrNull{it.timestamp} ?: window.start
-  val raw=mutableListOf<Interval>()
-  var locked:Instant?=null;var off:Instant?=null;var shutdown:Instant?=null
-  var boot:Instant?=null;var lastShutdown:Instant?=null
-  fun append(a:Instant,b:Instant){Interval(a,minOf(maxOf(a,b),until)).intersect(Interval(window.start,until))?.let{raw.add(it)}}
-  fun fallback()=maxOf(window.start,boot?:firstBoot,lastShutdown?:firstBoot)
-  observed.forEach { event -> val t=event.timestamp
-   when(event.type){
-    ScreenEventType.KEYGUARD_SHOWN->locked=t
-    ScreenEventType.KEYGUARD_HIDDEN->{append(locked?:fallback(),t);locked=null}
-    ScreenEventType.SCREEN_NON_INTERACTIVE->off=t
-    ScreenEventType.SCREEN_INTERACTIVE->{append(off?:fallback(),t);off=null}
-    ScreenEventType.DEVICE_SHUTDOWN->{shutdown=t;lastShutdown=t}
-    ScreenEventType.DEVICE_STARTUP->{append(shutdown?:window.start,t);shutdown=null;boot=t}
-    ScreenEventType.DATA_GAP->{locked=null;off=null;shutdown=null}
+ fun calculate(events: List<ScreenEvent>, now: Instant, zone: ZoneId, sleep: SleepSchedule): AwayResult {
+  val window = AwakeWindow.at(now, zone, sleep)
+  val until = maxOf(window.start, minOf(now, window.end))
+  val usage = ScreenUsage.calculate(events, window.start, until)
+  val offStart = mutableListOf<Interval>()
+  var shutdown: Instant? = null
+  events.sortedBy { it.timestamp }.filter { it.timestamp < until }.forEach { event ->
+   when (event.type) {
+    ScreenEventType.DEVICE_SHUTDOWN -> shutdown = event.timestamp
+    ScreenEventType.DEVICE_STARTUP -> { shutdown?.let { start ->
+     Interval(start, event.timestamp).intersect(Interval(window.start, until))?.let(offStart::add)
+    }; shutdown = null }
+    ScreenEventType.DATA_GAP -> shutdown = null
+    else -> Unit
    }
   }
-  listOfNotNull(locked,off,shutdown).forEach{append(it,until)}
-  val active=Interval(window.start,window.end)
-  val effective=IntervalMath.union(raw).filter{it.duration>=minimum}.mapNotNull{it.intersect(active)}
-  return AwayResult(window,effective,IntervalMath.millis(effective))
+  shutdown?.let { start -> Interval(start, maxOf(start, until)).intersect(Interval(window.start, until))?.let(offStart::add) }
+  val away = IntervalMath.union(usage.inactiveIntervals + offStart)
+  val unknown = IntervalMath.subtract(usage.unknownIntervals, offStart)
+  return AwayResult(window, away, IntervalMath.millis(away), IntervalMath.millis(unknown))
  }
 }
 

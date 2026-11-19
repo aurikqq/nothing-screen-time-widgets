@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.weekly
+package com.aurikqq.noswidgets.weekly
 
 import android.app.Activity
 import android.content.Context
@@ -8,8 +8,8 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.Window
 import android.view.WindowManager
-import com.example.nothingwidgets.core.DailyResult
-import com.example.nothingwidgets.data.StatisticsRepository
+import com.aurikqq.noswidgets.core.DailyResult
+import com.aurikqq.noswidgets.data.StatisticsRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
@@ -18,7 +18,7 @@ import java.time.temporal.TemporalAdjusters
 class WeeklyAwayActivity : Activity() {
     private var insight = false
     override fun finish() {
-        if (insight) { WeeklyInsightStore.acknowledge(this); com.example.nothingwidgets.background.updateWidgets(this) }
+        if (insight) { WeeklyInsightStore.acknowledge(this); com.aurikqq.noswidgets.background.updateWidgets(this) }
         super.finish()
     }
     override fun onCreate(savedInstanceState: Bundle?) {

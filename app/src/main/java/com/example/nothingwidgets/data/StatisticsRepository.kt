@@ -1,7 +1,7 @@
-package com.example.nothingwidgets.data
+package com.aurikqq.noswidgets.data
 
 import android.content.Context
-import com.example.nothingwidgets.core.*
+import com.aurikqq.noswidgets.core.*
 import org.json.JSONObject
 import java.time.*
 
@@ -29,7 +29,7 @@ data class DailySnapshot(
     val date: LocalDate, val awayMillis: Long?, val screenMillis: Long?, val awakeMillis: Long,
     val updatedAtMillis: Long, val awayIntervals: List<Interval> = emptyList(),
     val awayPartial: Boolean = false, val screenPartial: Boolean = false,
-    val awayAxisDate: LocalDate = date, val calculationModel: Int = 2
+    val awayAxisDate: LocalDate = date, val calculationModel: Int = 3
 )
 
 /** Available intervals form a lower bound when part of the day is unknown. */
@@ -62,7 +62,7 @@ internal fun replicaSnapshot(events: UsageSnapshot, date: LocalDate, now: Instan
     val available = events.events.isNotEmpty() || events.activityEvents.isNotEmpty()
     return DailySnapshot(date, away.totalMillis.takeIf { available }, IntervalMath.millis(activity).takeIf { available },
         Duration.between(away.window.start,away.window.end).toMillis(),now.toEpochMilli(),away.intervals,
-        awayPartial = !available, screenPartial = !available, awayAxisDate = away.window.date)
+        awayPartial = !available || away.unknownMillis > 0, screenPartial = !available, awayAxisDate = away.window.date)
 }
 
 /** Call refresh on a background thread. Stored days are immutable after closing. */
@@ -90,10 +90,10 @@ class StatisticsRepository(context: Context) {
         if (!source.hasAccess()) return null
         val zone = ZoneId.systemDefault(); val date = LocalDate.now(zone)
         val raw = p.getString("current", null) ?: return null
-        return try { if (JSONObject(raw).optString("sleep") == settings.signature() && p.getString("current_zone", "") == zone.id) decode(raw)?.takeIf { it.calculationModel == 2 && it.date == date && it.updatedAtMillis <= System.currentTimeMillis() && p.getString("clock_uncertain", "") != key(date, zone) } else null } catch (_: Exception) { null }
+        return try { if (JSONObject(raw).optString("sleep") == settings.signature() && p.getString("current_zone", "") == zone.id) decode(raw)?.takeIf { it.calculationModel == 3 && it.date == date && it.updatedAtMillis <= System.currentTimeMillis() && p.getString("clock_uncertain", "") != key(date, zone) } else null } catch (_: Exception) { null }
     }
     fun readDay(date: LocalDate, zone: ZoneId = ZoneId.systemDefault()): DailySnapshot? =
-        if (zone == ZoneId.systemDefault() && date == LocalDate.now(zone)) readToday() else decode(p.getString(key(date, zone), null))?.takeIf { it.calculationModel == 2 }
+        if (zone == ZoneId.systemDefault() && date == LocalDate.now(zone)) readToday() else decode(p.getString(key(date, zone), null))?.takeIf { it.calculationModel == 3 }
     fun markClockUncertain() {
         val zone = ZoneId.systemDefault()
         p.edit().putString("clock_uncertain", key(LocalDate.now(zone), zone)).remove("current").apply()
@@ -118,7 +118,7 @@ class StatisticsRepository(context: Context) {
         // Keep a pending day if permission is temporarily unavailable after midnight.
         if (old != null && old.date == date.minusDays(1) && oldZone == zone.id && oldSleep == signature &&
             p.getString("clock_uncertain", "") != key(old.date, zone) &&
-            now >= date.atTime(schedule.end).atZone(zone).toInstant() && now.toEpochMilli() >= old.updatedAtMillis && (decode(p.getString(key(old.date, zone), null))?.calculationModel != 2)) {
+            now >= date.atTime(schedule.end).atZone(zone).toInstant() && now.toEpochMilli() >= old.updatedAtMillis && (decode(p.getString(key(old.date, zone), null))?.calculationModel != 3)) {
             val from = old.date.atStartOfDay(zone).toInstant()
             val closeTime = date.atTime(schedule.end).atZone(zone).toInstant().minusNanos(1)
             val events = source.read(from, closeTime)
@@ -134,7 +134,7 @@ class StatisticsRepository(context: Context) {
         val result = if (events.access == UsageAccess.GRANTED && reliableClock)
             replicaSnapshot(events, date, now, zone, schedule)
         else DailySnapshot(date, null, null, Duration.between(dayStart, date.plusDays(1).atStartOfDay(zone).toInstant()).toMillis(), now.toEpochMilli())
-        val diagnostic = "Методика: Nothing-compatible public API, Away threshold=10 min, Screen=Activity intervals\nДоступ: ${events.access}\nОбновлено: ${now.atZone(zone)}\nСон: ${schedule.start}–${schedule.end}\nСобытий: ${events.events.size}\n" +
+        val diagnostic = "Методика: Nothing-compatible public API, Away без минимального порога, Screen=Activity intervals\nДоступ: ${events.access}\nОбновлено: ${now.atZone(zone)}\nСон: ${schedule.start}–${schedule.end}\nСобытий: ${events.events.size}\n" +
             events.events.groupingBy { it.type }.eachCount().entries.joinToString("\n") { "${it.key}: ${it.value}" } +
             "\nЭкран: ${result.screenMillis?.div(60000)} мин; неполно: ${result.screenPartial}\nAway: ${result.awayMillis?.div(60000)} мин; неполно: ${result.awayPartial}"
         val detail = if (events.access == UsageAccess.GRANTED && reliableClock) {

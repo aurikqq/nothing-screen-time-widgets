@@ -1,4 +1,4 @@
-package com.example.nothingwidgets.core
+package com.aurikqq.noswidgets.core
 
 fun limitExceeded(screenMillis: Long?, limitMinutes: Int): Boolean {
     require(limitMinutes > 0)

@@ -1,10 +1,10 @@
-package com.example.nothingwidgets.weekly
+package com.aurikqq.noswidgets.weekly
 
 import android.content.Context
 import java.time.*
 import java.time.temporal.TemporalAdjusters
 import org.json.JSONArray
-import com.example.nothingwidgets.data.StatisticsRepository
+import com.aurikqq.noswidgets.data.StatisticsRepository
 
 object WeeklyInsightStore {
     private fun week() = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
