@@ -1,3 +1,3 @@
-# Локальные шрифты
+# Fonts
 
-Для точной типографики личной debug-сборки положите сюда `NType82-Regular.otf`, `NType82-Headline.otf` и `NDot-55.otf`. Они игнорируются Git. Получайте файлы только из законного источника; права на распространение не предоставлены. Release использует системные аналоги, пока вы не добавите лицензированные файлы в `src/release/assets/fonts/`.
+The debug build uses the bundled NDot 55 and NType 82 font files. The font files contain their own terms. The release build uses system fallbacks unless font files are added to its assets.

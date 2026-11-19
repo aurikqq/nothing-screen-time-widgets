@@ -7,9 +7,6 @@ local.properties
 
 .analysis/
 
-# Local-only fonts: redistribution rights have not been provided.
-*.otf
-*.ttf
 *.apk
 *.aab
 *.log

@@ -219,7 +219,19 @@ public final class UpdateController {
     static void installationResult(Context context, boolean success, String message) {
         preferences(context).edit().putString("status", message).apply();
         if (success) {
-            PendingDownload item = pending; if (item != null) deletePrivate(context, item.apk); pending = null; candidate = null;
+            PendingDownload item = pending;
+            if (item != null) {
+                deletePrivate(context, item.apk);
+            } else {
+                // The installer may restart the app before delivering STATUS_SUCCESS.
+                String saved = preferences(context).getString("pending_apk", "");
+                try {
+                    String name = new JSONObject(saved).getString("file");
+                    if (name.matches("release-[A-Za-z0-9-]+\\.apk"))
+                        deletePrivate(context, new File(new File(context.getFilesDir(), "updates"), name));
+                } catch (Exception ignored) { /* No valid saved download to remove. */ }
+            }
+            pending = null; candidate = null;
             preferences(context).edit().remove("pending_apk").putBoolean("resume_install", false).apply();
             publish(new UiState(false, false, false, false, "", "", message, -1));
         } else if (candidate != null) publish(releaseState(candidate, false, pending != null, message, pending != null ? 100 : -1));

@@ -46,12 +46,6 @@ To sign a release build, configure `NOTHING_KEYSTORE`, `NOTHING_STORE_PASSWORD`,
 
 ## Fonts
 
-If your font license permits local use, you can place the following font files in `app/src/debug/assets/fonts/`:
-
-- `NType82-Regular.otf` — Away Time display
-- `NType82-Headline.otf` — additional headline style
-- `NDot-55.otf` — Screen Time display
-
-NDot and NType 82 are copyrighted by Nothing. The supplied font files carry terms limiting use to Nothing brand materials. The public repository and APK use system fallbacks. Obtain written permission covering redistribution of the font files and embedding in the APK before including them in a public build. Attribution or an independence notice does not grant those rights.
+The font files NDot 55 and NType 82 are included for this project. Copyright and other rights in these typefaces belong to their respective owners. This project is independent and is not affiliated with Nothing Technology. The font files contain their own terms, which apply independently of the project source code.
 
 *This is a project for individual use, so I let myself use AI while creating it, but I can read, understand and change all the code. Just for your info.*
