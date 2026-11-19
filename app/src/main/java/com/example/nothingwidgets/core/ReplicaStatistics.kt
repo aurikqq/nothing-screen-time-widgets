@@ -42,6 +42,11 @@ data class AwakeWindow(val date: LocalDate,val start: Instant,val end: Instant,v
 
 data class AwayResult(val window: AwakeWindow, val intervals: List<Interval>, val totalMillis: Long, val unknownMillis: Long)
 object ReplicaAway {
+ private val minimumBreak = Duration.ofMinutes(10)
+
+ internal fun qualifyingBreaks(intervals: List<Interval>): List<Interval> =
+  IntervalMath.union(intervals).filter { it.duration >= minimumBreak }
+
  fun calculate(events: List<ScreenEvent>, now: Instant, zone: ZoneId, sleep: SleepSchedule): AwayResult {
   val window = AwakeWindow.at(now, zone, sleep)
   val until = maxOf(window.start, minOf(now, window.end))
@@ -59,7 +64,7 @@ object ReplicaAway {
    }
   }
   shutdown?.let { start -> Interval(start, maxOf(start, until)).intersect(Interval(window.start, until))?.let(offStart::add) }
-  val away = IntervalMath.union(usage.inactiveIntervals + offStart)
+  val away = qualifyingBreaks(usage.inactiveIntervals + offStart)
   val unknown = IntervalMath.subtract(usage.unknownIntervals, offStart)
   return AwayResult(window, away, IntervalMath.millis(away), IntervalMath.millis(unknown))
  }

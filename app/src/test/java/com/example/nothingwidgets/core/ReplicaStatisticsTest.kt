@@ -6,12 +6,12 @@ class ReplicaStatisticsTest {
  private val day=LocalDate.of(2026,11,17)
  private val zone=ZoneOffset.UTC
  private fun t(h:Int,m:Int=0)=day.atTime(h,m).toInstant(zone)
- @Test fun awayIncludesShortBreaksAndClipsAtWake(){
+ @Test fun awayRejectsShortBreaksAndClipsAtWake(){
   val e=listOf(ScreenEvent(t(0),ScreenEventType.SCREEN_NON_INTERACTIVE),ScreenEvent(t(8),ScreenEventType.SCREEN_INTERACTIVE),
    ScreenEvent(t(9),ScreenEventType.SCREEN_NON_INTERACTIVE),ScreenEvent(t(9,5),ScreenEventType.SCREEN_INTERACTIVE))
   val result=ReplicaAway.calculate(e,t(10),zone,SleepSchedule(LocalTime.of(1,0),LocalTime.of(7,0)))
-  assertEquals(3900000L,result.totalMillis)
-  assertEquals(listOf(Interval(t(7),t(8)), Interval(t(9),t(9,5))),result.intervals)
+  assertEquals(3600000L,result.totalMillis)
+  assertEquals(listOf(Interval(t(7),t(8))),result.intervals)
  }
  @Test fun poweredOffAndKeyguardIntervalsAreUnioned(){
   val e=listOf(ScreenEvent(t(4),ScreenEventType.DEVICE_SHUTDOWN),ScreenEvent(t(8),ScreenEventType.DEVICE_STARTUP),
@@ -23,10 +23,10 @@ class ReplicaStatisticsTest {
  @Test fun lockedScreenWakeupsDoNotBreakAwayTime() {
   val e=listOf(ScreenEvent(t(7),ScreenEventType.KEYGUARD_SHOWN), ScreenEvent(t(7,2),ScreenEventType.SCREEN_INTERACTIVE),
    ScreenEvent(t(7,3),ScreenEventType.SCREEN_NON_INTERACTIVE), ScreenEvent(t(7,5),ScreenEventType.SCREEN_INTERACTIVE),
-   ScreenEvent(t(7,6),ScreenEventType.SCREEN_NON_INTERACTIVE), ScreenEvent(t(7,8),ScreenEventType.KEYGUARD_HIDDEN),
-   ScreenEvent(t(7,8),ScreenEventType.SCREEN_INTERACTIVE))
-  val result=ReplicaAway.calculate(e,t(7,10),zone,SleepSchedule(LocalTime.of(23,0),LocalTime.of(7,0)))
-  assertEquals(8*60000L,result.totalMillis)
+   ScreenEvent(t(7,6),ScreenEventType.SCREEN_NON_INTERACTIVE), ScreenEvent(t(7,10),ScreenEventType.KEYGUARD_HIDDEN),
+   ScreenEvent(t(7,10),ScreenEventType.SCREEN_INTERACTIVE))
+  val result=ReplicaAway.calculate(e,t(7,12),zone,SleepSchedule(LocalTime.of(23,0),LocalTime.of(7,0)))
+  assertEquals(10*60000L,result.totalMillis)
   assertEquals(0L,result.unknownMillis)
  }
  @Test fun activityUsesStoppedAndDeduplicatesOverlappingWindows(){

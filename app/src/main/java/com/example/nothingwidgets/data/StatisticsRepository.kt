@@ -29,7 +29,7 @@ data class DailySnapshot(
     val date: LocalDate, val awayMillis: Long?, val screenMillis: Long?, val awakeMillis: Long,
     val updatedAtMillis: Long, val awayIntervals: List<Interval> = emptyList(),
     val awayPartial: Boolean = false, val screenPartial: Boolean = false,
-    val awayAxisDate: LocalDate = date, val calculationModel: Int = 3
+    val awayAxisDate: LocalDate = date, val calculationModel: Int = 4
 )
 
 /** Available intervals form a lower bound when part of the day is unknown. */
@@ -90,10 +90,23 @@ class StatisticsRepository(context: Context) {
         if (!source.hasAccess()) return null
         val zone = ZoneId.systemDefault(); val date = LocalDate.now(zone)
         val raw = p.getString("current", null) ?: return null
-        return try { if (JSONObject(raw).optString("sleep") == settings.signature() && p.getString("current_zone", "") == zone.id) decode(raw)?.takeIf { it.calculationModel == 3 && it.date == date && it.updatedAtMillis <= System.currentTimeMillis() && p.getString("clock_uncertain", "") != key(date, zone) } else null } catch (_: Exception) { null }
+        return try { if (JSONObject(raw).optString("sleep") == settings.signature() && p.getString("current_zone", "") == zone.id) decode(raw)?.takeIf { it.calculationModel == 4 && it.date == date && it.updatedAtMillis <= System.currentTimeMillis() && p.getString("clock_uncertain", "") != key(date, zone) } else null } catch (_: Exception) { null }
     }
     fun readDay(date: LocalDate, zone: ZoneId = ZoneId.systemDefault()): DailySnapshot? =
-        if (zone == ZoneId.systemDefault() && date == LocalDate.now(zone)) readToday() else decode(p.getString(key(date, zone), null))?.takeIf { it.calculationModel == 3 }
+        if (zone == ZoneId.systemDefault() && date == LocalDate.now(zone)) readToday() else decode(p.getString(key(date, zone), null))?.let { snapshot ->
+            when (snapshot.calculationModel) {
+                4 -> snapshot
+                3 -> {
+                    val breaks = ReplicaAway.qualifyingBreaks(snapshot.awayIntervals)
+                    snapshot.copy(
+                        awayMillis = snapshot.awayMillis?.let { IntervalMath.millis(breaks) },
+                        awayIntervals = breaks,
+                        calculationModel = 4
+                    )
+                }
+                else -> null
+            }
+        }
     fun markClockUncertain() {
         val zone = ZoneId.systemDefault()
         p.edit().putString("clock_uncertain", key(LocalDate.now(zone), zone)).remove("current").apply()
@@ -118,7 +131,7 @@ class StatisticsRepository(context: Context) {
         // Keep a pending day if permission is temporarily unavailable after midnight.
         if (old != null && old.date == date.minusDays(1) && oldZone == zone.id && oldSleep == signature &&
             p.getString("clock_uncertain", "") != key(old.date, zone) &&
-            now >= date.atTime(schedule.end).atZone(zone).toInstant() && now.toEpochMilli() >= old.updatedAtMillis && (decode(p.getString(key(old.date, zone), null))?.calculationModel != 3)) {
+            now >= date.atTime(schedule.end).atZone(zone).toInstant() && now.toEpochMilli() >= old.updatedAtMillis && (decode(p.getString(key(old.date, zone), null))?.calculationModel != 4)) {
             val from = old.date.atStartOfDay(zone).toInstant()
             val closeTime = date.atTime(schedule.end).atZone(zone).toInstant().minusNanos(1)
             val events = source.read(from, closeTime)
@@ -134,7 +147,7 @@ class StatisticsRepository(context: Context) {
         val result = if (events.access == UsageAccess.GRANTED && reliableClock)
             replicaSnapshot(events, date, now, zone, schedule)
         else DailySnapshot(date, null, null, Duration.between(dayStart, date.plusDays(1).atStartOfDay(zone).toInstant()).toMillis(), now.toEpochMilli())
-        val diagnostic = "Методика: Nothing-compatible public API, Away без минимального порога, Screen=Activity intervals\nДоступ: ${events.access}\nОбновлено: ${now.atZone(zone)}\nСон: ${schedule.start}–${schedule.end}\nСобытий: ${events.events.size}\n" +
+        val diagnostic = "Методика: Nothing-compatible public API, Away ≥10 мин в часы бодрствования, Screen=Activity intervals\nДоступ: ${events.access}\nОбновлено: ${now.atZone(zone)}\nСон: ${schedule.start}–${schedule.end}\nСобытий: ${events.events.size}\n" +
             events.events.groupingBy { it.type }.eachCount().entries.joinToString("\n") { "${it.key}: ${it.value}" } +
             "\nЭкран: ${result.screenMillis?.div(60000)} мин; неполно: ${result.screenPartial}\nAway: ${result.awayMillis?.div(60000)} мин; неполно: ${result.awayPartial}"
         val detail = if (events.access == UsageAccess.GRANTED && reliableClock) {

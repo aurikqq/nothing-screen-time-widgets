@@ -12,6 +12,6 @@ android {
         }
         buildTypes.getByName("release").signingConfig = signingConfigs.getByName("privateRelease")
     }
-    defaultConfig { applicationId = "com.aurikqq.noswidgets"; minSdk = 31; targetSdk = 36; versionCode = 9; versionName = "0.9.0" }
+    defaultConfig { applicationId = "com.aurikqq.noswidgets"; minSdk = 31; targetSdk = 36; versionCode = 10; versionName = "0.9.1" }
 }
 dependencies { implementation("com.google.android.material:material:1.14.0"); implementation("androidx.work:work-runtime:2.12.0"); testImplementation("junit:junit:4.13.2") }
