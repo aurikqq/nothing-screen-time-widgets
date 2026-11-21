@@ -111,7 +111,7 @@ class StatisticsRepository(context: Context) {
         val zone = ZoneId.systemDefault()
         p.edit().putString("clock_uncertain", key(LocalDate.now(zone), zone)).remove("current").apply()
     }
-    fun diagnosticSummary(): String = p.getString("diagnostic", "Обновление ещё не выполнялось.") ?: ""
+    fun diagnosticSummary(): String = p.getString("diagnostic", if (ctx.resources.configuration.locales[0].language == "ru") "Обновление ещё не выполнялось." else "No update has been recorded yet.") ?: ""
     fun refresh(): DailySnapshot = synchronized(refreshLock) {
         val now = Instant.now(); val zone = ZoneId.systemDefault(); val date = now.atZone(zone).toLocalDate()
         val dayStart = date.atStartOfDay(zone).toInstant()
@@ -147,21 +147,28 @@ class StatisticsRepository(context: Context) {
         val result = if (events.access == UsageAccess.GRANTED && reliableClock)
             replicaSnapshot(events, date, now, zone, schedule)
         else DailySnapshot(date, null, null, Duration.between(dayStart, date.plusDays(1).atStartOfDay(zone).toInstant()).toMillis(), now.toEpochMilli())
-        val diagnostic = "Методика: Nothing-compatible public API, Away ≥10 мин в часы бодрствования, Screen=Activity intervals\nДоступ: ${events.access}\nОбновлено: ${now.atZone(zone)}\nСон: ${schedule.start}–${schedule.end}\nСобытий: ${events.events.size}\n" +
+        val russian = ctx.resources.configuration.locales[0].language == "ru"
+        fun localized(ru: String, en: String) = if (russian) ru else en
+        val diagnosticRu = "Методика: Nothing-compatible public API, Away ≥10 мин в часы бодрствования, Screen=Activity intervals\nДоступ: ${events.access}\nОбновлено: ${now.atZone(zone)}\nСон: ${schedule.start}–${schedule.end}\nСобытий: ${events.events.size}\n" +
             events.events.groupingBy { it.type }.eachCount().entries.joinToString("\n") { "${it.key}: ${it.value}" } +
             "\nЭкран: ${result.screenMillis?.div(60000)} мин; неполно: ${result.screenPartial}\nAway: ${result.awayMillis?.div(60000)} мин; неполно: ${result.awayPartial}"
+        val diagnostic = if (russian) diagnosticRu else diagnosticRu
+            .replace("Методика: Nothing-compatible public API, Away ≥10 мин в часы бодрствования, Screen=Activity intervals", "Method: 10-minute Away breaks during waking hours, Screen=Activity intervals")
+            .replace("Доступ:", "Access:").replace("Обновлено:", "Updated:").replace("Сон:", "Sleep:")
+            .replace("Событий:", "Events:").replace("Экран:", "Screen:").replace("Away:", "Away:")
+            .replace(" мин; неполно:", " min; incomplete:")
         val detail = if (events.access == UsageAccess.GRANTED && reliableClock) {
             val daily = DailyStatistics.calculate(events.events, date, zone, now, schedule)
             val format = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss.SSS").withZone(zone)
             val screenOnly = DailyStatistics.calculate(screenInteractiveEvents(events.events), date, zone, now, schedule)
             fun ranges(label: String, intervals: List<Interval>): String = "\n$label:\n" + intervals.joinToString("\n") { "${format.format(it.start)}–${format.format(it.end)}" }
-            "\nСобытий за сегодня: ${events.events.count { it.timestamp >= dayStart }}" +
-                "\nДля сравнения: Away только при выключенном экране: ${screenOnly.awayDuration.toMinutes()} мин; неполно: ${!screenOnly.awakeUnknownDuration.isZero}" +
-                "\nСобытия экрана/блокировки за сегодня (без приложений):\n" +
+            localized("\nСобытий за сегодня: ", "\nEvents today: ") + events.events.count { it.timestamp >= dayStart } +
+                localized("\nДля сравнения: Away только при выключенном экране: ", "\nComparison: Away with screen off only: ") + screenOnly.awayDuration.toMinutes() + localized(" мин; неполно: ", " min; incomplete: ") + !screenOnly.awakeUnknownDuration.isZero +
+                localized("\nСобытия экрана/блокировки за сегодня (без приложений):\n", "\nScreen and lock events today (excluding apps):\n") +
                 events.events.filter { it.timestamp >= dayStart }.joinToString("\n") { "${format.format(it.timestamp)} ${it.type}" } +
-                ranges("Экран используется (Activity)", ReplicaScreenTime.intervals(events.activityEvents,dayStart,now)) +
-                ranges("Подтверждённый Away вне сна", result.awayIntervals) +
-                "\nПрежняя методика разблокированного экрана (для сравнения): ${daily.usage.knownUsage.toMinutes()} мин"
+                ranges(localized("Экран используется (Activity)", "Screen use (Activity)"), ReplicaScreenTime.intervals(events.activityEvents,dayStart,now)) +
+                ranges(localized("Подтверждённый Away вне сна", "Confirmed Away during waking hours"), result.awayIntervals) +
+                localized("\nПрежняя методика разблокированного экрана (для сравнения): ", "\nPrevious unlocked-screen method (comparison): ") + daily.usage.knownUsage.toMinutes() + localized(" мин", " min")
         } else ""
         p.edit().putString("diagnostic", diagnostic + detail).putString("current", encode(result, signature)).putString("current_zone", zone.id).apply()
         result

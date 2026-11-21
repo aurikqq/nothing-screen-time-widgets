@@ -27,16 +27,16 @@ public final class ReleaseCheckWorker extends Worker {
                 PendingIntent content = PendingIntent.getActivity(context, 4101, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
                 Notification notification = new Notification.Builder(context, UpdateController.CHANNEL)
                         .setSmallIcon(android.R.drawable.stat_sys_download_done)
-                        .setContentTitle("Опубликован релиз " + release.tag)
-                        .setContentText("Откройте приложение, чтобы скачать обновление.")
-                        .setStyle(new Notification.BigTextStyle().bigText("Доступен релиз " + release.tag + ". Загрузка и установка выполняются только после вашего нажатия."))
+                        .setContentTitle(context.getString(com.aurikqq.noswidgets.R.string.release_published, release.tag))
+                        .setContentText(context.getString(com.aurikqq.noswidgets.R.string.loc_72))
+                        .setStyle(new Notification.BigTextStyle().bigText(context.getString(com.aurikqq.noswidgets.R.string.release_notice, release.tag)))
                         .setContentIntent(content).setAutoCancel(true).build();
                 context.getSystemService(NotificationManager.class).notify(UpdateController.RELEASE_NOTIFICATION, notification);
                 UpdateController.preferences(context).edit().putString("notified_tag", release.tag).apply();
             }
             return Result.success();
         } catch (Exception error) {
-            UpdateController.preferences(context).edit().putString("status", "Ежедневная проверка не выполнена (" + error.getClass().getSimpleName() + "). APK не загружалась.").apply();
+            UpdateController.preferences(context).edit().putString("status", context.getString(com.aurikqq.noswidgets.R.string.worker_error, error.getClass().getSimpleName())).apply();
             // Periodic work will try on its next scheduled run; avoid repeatedly exhausting GitHub API limits.
             return Result.success();
         }

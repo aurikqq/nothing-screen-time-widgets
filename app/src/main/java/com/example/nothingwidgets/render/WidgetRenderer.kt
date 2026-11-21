@@ -42,6 +42,8 @@ object WidgetRenderer {
         val nowFraction: Float? = null,
         val label: String = "Away",
         val noDataLabel: String = "No data",
+        val hourUnit: String = "h",
+        val minuteUnit: String = "m",
         val monday: Boolean = false,
         val partial: Boolean = false,
         val displaySidePixels: Float = 564f,
@@ -95,7 +97,7 @@ object WidgetRenderer {
         }
         text(c, p, if (data.totalMinutes == null) data.noDataLabel else data.label,
             50f, 374f, 55f, 400f, fonts.label, palette.foreground)
-        val duration = data.totalMinutes?.let { "${it / 60}h ${it % 60}m" } ?: "—"
+        val duration = data.totalMinutes?.let { "${it / 60}${data.hourUnit} ${it % 60}${data.minuteUnit}" } ?: "—"
         text(c, p, duration, 43f, 496f, 100f, 350f, fonts.duration, palette.foreground)
         if (data.monday) { p.color = palette.accent; c.drawCircle(477f, 455f, 17f, p) }
         else star(c, p, 477f, 455f, 33f, palette.accent)

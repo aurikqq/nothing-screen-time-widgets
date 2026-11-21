@@ -106,14 +106,14 @@ abstract class StatisticsWidgetProvider : AppWidgetProvider() {
         val sideDp = minOf(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,180),
             options.getInt(if(context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT else AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT,180)).coerceAtLeast(1)
         val bitmap = WidgetRenderer.away(BITMAP_SIZE, BITMAP_SIZE,
-            WidgetRenderer.AwayData(data?.awayMillis?.div(60_000L), intervals,
+            WidgetRenderer.AwayData(data?.awayMillis?.div(60_000L), intervals, label = context.getString(com.aurikqq.noswidgets.R.string.widget_away), noDataLabel = context.getString(com.aurikqq.noswidgets.R.string.widget_no_data), hourUnit = context.getString(com.aurikqq.noswidgets.R.string.widget_unit_h), minuteUnit = context.getString(com.aurikqq.noswidgets.R.string.widget_unit_m),
                 nowFraction = axis.fraction(Instant.now()).toFloat(),
                 monday = com.aurikqq.noswidgets.weekly.WeeklyInsightStore.pending(context),
                 partial = data?.awayPartial ?: false, displaySidePixels=sideDp*density, displayDensity=density),
             palette = widgetPalette(context), fonts = widgetFonts(context))
         view.setImageViewBitmap(R.id.widget_image, bitmap)
         view.setContentDescription(R.id.widget_image,
-            summary("Away", data?.awayMillis, data?.awayPartial ?: false) + ". Tap for weekly statistics")
+            summary(context, context.getString(com.aurikqq.noswidgets.R.string.widget_away), data?.awayMillis, data?.awayPartial ?: false) + ". " + context.getString(com.aurikqq.noswidgets.R.string.a11y_tap_weekly))
         val intent = Intent().setClassName(context.packageName,
             "com.aurikqq.noswidgets.weekly.WeeklyAwayActivity")
         val tap = PendingIntent.getActivity(context, 0, intent,
@@ -126,7 +126,7 @@ abstract class StatisticsWidgetProvider : AppWidgetProvider() {
         val palette = widgetPalette(context)
         val limit = SettingsStore(context).limitForWidget(id)
         val partial = data?.screenPartial ?: false
-        val screen = WidgetRenderer.ScreenData(data?.screenMillis?.div(60_000L), limit.toLong(),
+        val screen = WidgetRenderer.ScreenData(data?.screenMillis?.div(60_000L), limit.toLong(), noDataLabel = context.getString(com.aurikqq.noswidgets.R.string.widget_no_data),
             overLimit = com.aurikqq.noswidgets.core.limitExceeded(data?.screenMillis, limit),
             partial = partial)
         val background = WidgetRenderer.screenBackground(128, 128, screen, palette)
@@ -161,9 +161,9 @@ abstract class StatisticsWidgetProvider : AppWidgetProvider() {
                 item.setImageViewBitmap(R.id.eyes_second, eyes)
                 item.setImageViewBitmap(R.id.widget_image, bitmap)
                 item.setContentDescription(R.id.widget_image,
-                    summary("Screen time", data?.screenMillis, partial) +
-                        if (face) ". Face page. Scroll vertically for time page"
-                        else ". Time page. Scroll vertically for face page")
+                    summary(context, context.getString(com.aurikqq.noswidgets.R.string.widget_label_screen), data?.screenMillis, partial) +
+                        if (face) ". " + context.getString(com.aurikqq.noswidgets.R.string.a11y_face)
+                        else ". " + context.getString(com.aurikqq.noswidgets.R.string.a11y_time))
                 items.addItem(semanticPage.toLong(), item)
             }
             view.setRemoteAdapter(R.id.screen_pages, items.build())
@@ -203,9 +203,12 @@ abstract class StatisticsWidgetProvider : AppWidgetProvider() {
             } catch (_: RuntimeException) { android.graphics.Typeface.SERIF }), emboldenDot = adjustment > 0)
     }
 
-    private fun summary(label: String, millis: Long?, partial: Boolean = false): String = millis?.div(60_000L)?.let {
-        "$label: ${if (partial) "at least " else ""}${it / 60}h ${it % 60}m${if (partial) ". Partial data" else ""}"
-    } ?: "$label: No data"
+    private fun summary(context: Context, label: String, millis: Long?, partial: Boolean = false): String {
+        if (millis == null) return "$label: ${context.getString(com.aurikqq.noswidgets.R.string.widget_no_data)}"
+        val minutes = millis / 60_000L
+        val prefix = if (partial) context.getString(com.aurikqq.noswidgets.R.string.a11y_at_least) + " " else ""
+        return "$label: $prefix${minutes / 60}${context.getString(com.aurikqq.noswidgets.R.string.widget_unit_h)} ${minutes % 60}${context.getString(com.aurikqq.noswidgets.R.string.widget_unit_m)}"
+    }
 
     private fun widgetPalette(context: Context): WidgetRenderer.Palette {
         val proposedBackground = context.getColor(android.R.color.system_neutral1_900)

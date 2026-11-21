@@ -35,7 +35,7 @@ public final class UpdateConfirmationActivity extends Activity {
         if (status == null) return;
         UpdateController.attach(this, state -> {
             status.setText(state.message + (state.tag.isEmpty() ? "" : "\n" + state.tag + "\n" + state.notes));
-            action.setText(state.downloading ? (state.progress < 0 ? state.message : "Загрузка " + state.progress + "%") : state.readyToInstall ? "Установить" : state.visible && !state.tag.isEmpty() ? "Скачать" : "Проверить обновления");
+            action.setText(state.downloading ? (state.progress < 0 ? state.message : getString(com.aurikqq.noswidgets.R.string.download_progress, state.progress)) : state.readyToInstall ? this.getString(com.aurikqq.noswidgets.R.string.loc_23) : state.visible && !state.tag.isEmpty() ? this.getString(com.aurikqq.noswidgets.R.string.loc_20) : this.getString(com.aurikqq.noswidgets.R.string.loc_10));
             action.setEnabled(!state.downloading && !state.checking);
         });
     }

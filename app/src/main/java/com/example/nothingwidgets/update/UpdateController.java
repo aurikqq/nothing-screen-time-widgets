@@ -87,18 +87,21 @@ public final class UpdateController {
     /** Metadata only. Every foreground entry calls this; concurrent work is coalesced. */
     public static void check(Activity activity) { check(activity, false); }
     /** Manual checks expose offline/no-release results in the banner for an explicit retry. */
-    public static void checkManual(Activity activity) { check(activity, true); }
+    public static void checkManual(Activity activity) {
+        android.widget.Toast.makeText(activity, activity.getString(com.aurikqq.noswidgets.R.string.loc_43), android.widget.Toast.LENGTH_SHORT).show();
+        check(activity, true);
+    }
     private static void check(Activity activity, boolean manual) {
         Context app = activity.getApplicationContext();
         GitHubUpdater updater = configuredUpdater(app);
         if (updater == null || !BUSY.compareAndSet(false, true)) return;
-        if (!state.visible) publish(new UiState(false, true, false, false, "", "", "Проверяем обновления…", -1));
+        if (!state.visible) publish(new UiState(false, true, false, false, "", "", app.getString(com.aurikqq.noswidgets.R.string.loc_44), -1));
         EXECUTOR.execute(() -> {
             try {
                 if (pending == null) pending = restore(app, updater);
                 if (pending != null) {
                     candidate = pending.release;
-                    publish(releaseState(candidate, false, true, "Обновление готово к установке", 100));
+                    publish(releaseState(candidate, false, true, app.getString(com.aurikqq.noswidgets.R.string.loc_45), 100));
                 }
                 // Metadata is refreshed on every foreground entry, even with a downloaded APK.
                 GitHubUpdater.Release release = updater.checkLatest();
@@ -109,21 +112,23 @@ public final class UpdateController {
                     }
                     if (pending == null) {
                         candidate = release; recordCandidate(app, release);
-                        publish(releaseState(release, false, false, "Доступна новая версия", -1));
+                        publish(releaseState(release, false, false, app.getString(com.aurikqq.noswidgets.R.string.loc_46), -1));
                     }
                 } else if (pending == null) {
                     candidate = null;
-                    publish(new UiState(manual, false, false, false, "", "", "Установлена актуальная версия", -1));
+                    publish(new UiState(false, false, false, false, "", "", app.getString(com.aurikqq.noswidgets.R.string.loc_47), -1));
+                    if (manual) MAIN.post(() -> { Activity current = foreground.get(); if (current != null) android.widget.Toast.makeText(current, current.getString(com.aurikqq.noswidgets.R.string.loc_48), android.widget.Toast.LENGTH_SHORT).show(); });
                 }
             } catch (GitHubUpdater.NoPublishedReleaseException noRelease) {
                 if (pending == null) {
                     candidate = null;
-                    publish(new UiState(manual, false, false, false, "", "", "Релизы ещё не опубликованы", -1));
+                    publish(new UiState(false, false, false, false, "", "", app.getString(com.aurikqq.noswidgets.R.string.loc_49), -1));
+                    if (manual) MAIN.post(() -> { Activity current = foreground.get(); if (current != null) android.widget.Toast.makeText(current, current.getString(com.aurikqq.noswidgets.R.string.loc_48), android.widget.Toast.LENGTH_SHORT).show(); });
                 }
             } catch (Exception error) {
                 if (pending == null) {
                     candidate = null;
-                    publish(new UiState(manual, false, false, false, "", "", "Не удалось проверить обновления. Повторите проверку позже.", -1));
+                    publish(new UiState(manual, false, false, false, "", "", app.getString(com.aurikqq.noswidgets.R.string.loc_50), -1));
                 }
             } finally {
                 BUSY.set(false);
@@ -141,19 +146,19 @@ public final class UpdateController {
         GitHubUpdater updater = configuredUpdater(activity);
         if (release == null || updater == null || !BUSY.compareAndSet(false, true)) return;
         Context app = activity.getApplicationContext();
-        publish(releaseState(release, true, false, "Скачиваем обновление…", 0));
+        publish(releaseState(release, true, false, app.getString(com.aurikqq.noswidgets.R.string.loc_51), 0));
         EXECUTOR.execute(() -> {
             try {
                 File apk = updater.downloadAfterUserRequest(app, release, (done, total) -> {
                     int percent = (int) (done * 100 / total);
-                    if (percent != state.progress) publish(releaseState(release, true, false, percent == 100 ? "Проверяем APK…" : "Скачиваем обновление…", percent));
+                    if (percent != state.progress) publish(releaseState(release, true, false, percent == 100 ? app.getString(com.aurikqq.noswidgets.R.string.loc_52) : app.getString(com.aurikqq.noswidgets.R.string.loc_51), percent));
                 });
                 long version = updater.verify(app, release, apk);
                 pending = new PendingDownload(updater, release, apk, version);
                 persist(app, pending);
-                publish(releaseState(release, false, true, "Обновление проверено и готово к установке", 100));
+                publish(releaseState(release, false, true, app.getString(com.aurikqq.noswidgets.R.string.loc_53), 100));
             } catch (Exception error) {
-                publish(releaseState(release, false, false, "Не удалось скачать или проверить APK. Нажмите, чтобы повторить.", -1));
+                publish(releaseState(release, false, false, app.getString(com.aurikqq.noswidgets.R.string.loc_54), -1));
             } finally { BUSY.set(false); }
         });
     }
@@ -163,27 +168,27 @@ public final class UpdateController {
         if (item == null || BUSY.get()) return;
         if (!activity.getPackageManager().canRequestPackageInstalls()) {
             preferences(activity).edit().putBoolean("resume_install", true).apply();
-            publish(releaseState(item.release, false, true, "Разрешите установку из этого приложения в настройках Android", 100));
+            publish(releaseState(item.release, false, true, activity.getString(com.aurikqq.noswidgets.R.string.loc_55), 100));
             try { activity.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + activity.getPackageName()))); }
             catch (android.content.ActivityNotFoundException error) {
                 preferences(activity).edit().putBoolean("resume_install", false).apply();
-                publish(releaseState(item.release, false, true, "Экран разрешения установки недоступен", 100));
+                publish(releaseState(item.release, false, true, activity.getString(com.aurikqq.noswidgets.R.string.loc_56), 100));
             }
             return;
         }
         if (!BUSY.compareAndSet(false, true)) return;
         Context app = activity.getApplicationContext();
         preferences(app).edit().putBoolean("resume_install", false).apply();
-        publish(releaseState(item.release, true, false, "Открываем системный установщик…", -1));
+        publish(releaseState(item.release, true, false, activity.getString(com.aurikqq.noswidgets.R.string.loc_57), -1));
         EXECUTOR.execute(() -> {
             try {
                 Intent callback = new Intent(app, UpdateInstallReceiver.class).setAction(app.getPackageName() + ".UPDATE_INSTALL_RESULT");
                 PendingIntent result = PendingIntent.getBroadcast(app, 4104, callback, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
                 item.updater.installAfterUserConfirmation(app, item.release, item.apk, result.getIntentSender());
                 // Keep the private verified APK until the installer reports success, allowing cancellation retry.
-                MAIN.post(() -> { if (pending == item) publish(releaseState(item.release, false, true, "Подтвердите установку в системном окне Android", 100)); });
+                MAIN.post(() -> { if (pending == item) publish(releaseState(item.release, false, true, app.getString(com.aurikqq.noswidgets.R.string.loc_58), 100)); });
             } catch (Exception error) {
-                MAIN.post(() -> { if (pending == item) publish(releaseState(item.release, false, true, "Не удалось начать установку. Повторите попытку.", 100)); });
+                MAIN.post(() -> { if (pending == item) publish(releaseState(item.release, false, true, app.getString(com.aurikqq.noswidgets.R.string.loc_59), 100)); });
             } finally { BUSY.set(false); }
         });
     }
@@ -247,9 +252,9 @@ public final class UpdateController {
         return true;
     }
     static void recordCandidate(Context context, GitHubUpdater.Release release) {
-        preferences(context).edit().putString("status", "Доступен релиз " + release.tag).apply();
+        preferences(context).edit().putString("status", context.getString(com.aurikqq.noswidgets.R.string.release_available, release.tag)).apply();
     }
-    public static String status(Context context) { return state.message.isEmpty() ? preferences(context).getString("status", "Обновления проверяются при открытии приложения.") : state.message; }
+    public static String status(Context context) { return state.message.isEmpty() ? preferences(context).getString("status", context.getString(com.aurikqq.noswidgets.R.string.status_check)) : state.message; }
     public static void showManualCheck(Activity activity) { checkManual(activity); }
     public static void showPendingInstallation(Activity activity) { attach(activity, ignored -> {}); }
     public static void onPause(Activity activity) { detach(activity); }
@@ -260,21 +265,35 @@ public final class UpdateController {
         WorkManager.getInstance(context).enqueueUniquePeriodicWork("github-release-check", ExistingPeriodicWorkPolicy.KEEP, work);
     }
     public static void explainAndRequestNotifications(Activity activity) {
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity).setTitle("Уведомления об обновлениях").setMessage("Разрешить уведомления о новых версиях? Проверка при открытии приложения работает и без них.")
-                .setNegativeButton("Не сейчас", null).setPositiveButton("Разрешить", (dialog, which) -> {
+        if (notificationsAllowed(activity)) {
+            new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
+                .setTitle(activity.getString(com.aurikqq.noswidgets.R.string.loc_12))
+                .setMessage(activity.getString(com.aurikqq.noswidgets.R.string.loc_60))
+                .setNegativeButton(activity.getString(com.aurikqq.noswidgets.R.string.loc_32), null)
+                .setPositiveButton(activity.getString(com.aurikqq.noswidgets.R.string.loc_61), (dialog, which) -> {
+                    preferences(activity).edit().putBoolean("notifications_enabled", false).apply();
+                    activity.recreate();
+                }).show();
+            return;
+        }
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(activity).setTitle(activity.getString(com.aurikqq.noswidgets.R.string.loc_12)).setMessage(activity.getString(com.aurikqq.noswidgets.R.string.loc_62))
+                .setNegativeButton(activity.getString(com.aurikqq.noswidgets.R.string.loc_63), null).setPositiveButton(activity.getString(com.aurikqq.noswidgets.R.string.loc_64), (dialog, which) -> {
+                    preferences(activity).edit().putBoolean("notifications_enabled", true).apply();
                     ensureChannel(activity);
                     if (Build.VERSION.SDK_INT >= 33 && activity.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
                         activity.requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 4103);
                     else if (!notificationsAllowed(activity)) activity.startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, activity.getPackageName()));
+                    else activity.recreate();
                 }).show();
     }
-    static boolean notificationsAllowed(Context context) {
+    public static boolean notificationsAllowed(Context context) {
+        if (!preferences(context).getBoolean("notifications_enabled", true)) return false;
         if (Build.VERSION.SDK_INT >= 33 && context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false;
         NotificationManager manager = context.getSystemService(NotificationManager.class);
         NotificationChannel channel = manager.getNotificationChannel(CHANNEL);
         return manager.areNotificationsEnabled() && (channel == null || channel.getImportance() != NotificationManager.IMPORTANCE_NONE);
     }
-    static void ensureChannel(Context context) { context.getSystemService(NotificationManager.class).createNotificationChannel(new NotificationChannel(CHANNEL, "Обновления GitHub", NotificationManager.IMPORTANCE_DEFAULT)); }
+    static void ensureChannel(Context context) { context.getSystemService(NotificationManager.class).createNotificationChannel(new NotificationChannel(CHANNEL, context.getString(com.aurikqq.noswidgets.R.string.loc_65), NotificationManager.IMPORTANCE_DEFAULT)); }
     private static final class PendingDownload {
         final GitHubUpdater updater; final GitHubUpdater.Release release; final File apk; final long version;
         PendingDownload(GitHubUpdater updater, GitHubUpdater.Release release, File apk, long version) { this.updater = updater; this.release = release; this.apk = apk; this.version = version; }

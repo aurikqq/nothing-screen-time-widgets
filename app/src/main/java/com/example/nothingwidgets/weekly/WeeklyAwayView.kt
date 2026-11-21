@@ -26,7 +26,7 @@ internal class WeeklyAwayView(
     private val muted = Color.rgb(212, 214, 227)
     private var unit = 1f
     private val close = ImageButton(context).apply {
-        contentDescription = "Close weekly away time"
+        contentDescription = context.getString(com.aurikqq.noswidgets.R.string.a11y_close_weekly)
         setImageDrawable(CloseDrawable())
         background = android.graphics.drawable.GradientDrawable().apply {
             shape = android.graphics.drawable.GradientDrawable.OVAL
@@ -40,9 +40,9 @@ internal class WeeklyAwayView(
         setWillNotDraw(false)
         addView(close, LayoutParams(1, 1))
         val measurements = minutes.mapIndexed { index, value ->
-            "${monday.plusDays(index.toLong())}: ${value?.let(::duration) ?: "no data"}"
+            "${monday.plusDays(index.toLong())}: ${value?.let(::duration) ?: context.getString(com.aurikqq.noswidgets.R.string.widget_no_data)}"
         }.joinToString(". ")
-        contentDescription = "Weekly away time. ${if (partial) "Partial data. " else ""}$measurements"
+        contentDescription = "${context.getString(com.aurikqq.noswidgets.R.string.widget_weekly)}. ${if (partial) context.getString(com.aurikqq.noswidgets.R.string.widget_partial) + ". " else ""}$measurements"
         importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
     }
 
@@ -80,16 +80,16 @@ internal class WeeklyAwayView(
             floatArrayOf(0f, .57f, 1f), Shader.TileMode.CLAMP)
         canvas.drawRoundRect(bounds, 58f, 58f, painter)
         painter.shader = null
-        text(canvas, "Weekly away time", 42f, 83f, 41f, white, Typeface.MONOSPACE, true)
+        text(canvas, context.getString(com.aurikqq.noswidgets.R.string.widget_weekly), 42f, 83f, 41f, white, Typeface.MONOSPACE, true)
         star(canvas, 886f, 69f)
         val known = minutes.filterNotNull()
         val total = known.sum()
         text(canvas, if (known.isEmpty()) "—" else duration(total, compact = true),
             42f, 211f, 72f, white, Typeface.create("serif", Typeface.NORMAL))
-        val formatter = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH)
+        val formatter = DateTimeFormatter.ofPattern("MMM d", resources.configuration.locales[0])
         text(canvas, "${monday.format(formatter)} – ${monday.plusDays(6).format(formatter)}",
             42f, 270f, 36f, muted)
-        if (partial && known.isNotEmpty()) text(canvas, "Partial data", 42f, 311f, 24f, muted)
+        if (partial && known.isNotEmpty()) text(canvas, context.getString(com.aurikqq.noswidgets.R.string.widget_partial), 42f, 311f, 24f, muted)
         painter.color = Color.argb(110, 25, 36, 67)
         canvas.drawRoundRect(RectF(32f, 338f, 922f, 423f), 23f, 23f, painter)
         for (i in 0..11) {
@@ -97,19 +97,25 @@ internal class WeeklyAwayView(
             painter.color = white
             canvas.drawCircle(71f + cos(angle).toFloat() * 14f, 380f + sin(angle).toFloat() * 14f, 2.3f, painter)
         }
-        text(canvas, "Day average", 111f, 397f, 41f, white)
+        text(canvas, context.getString(com.aurikqq.noswidgets.R.string.widget_average), 111f, 397f, 41f, white)
         val average = if (known.isEmpty()) "—" else duration(total / known.size)
         text(canvas, average, 900f, 396f, 40f, white, Typeface.MONOSPACE, true, Paint.Align.RIGHT)
         drawChart(canvas)
         if (selected.dayOfWeek == java.time.DayOfWeek.MONDAY && monday == selected.minusWeeks(1)) {
             val firstMax = minutes.withIndex().filter { it.value != null }.maxByOrNull { it.value!! }
-            val message = if (firstMax == null) "Best day: no data" else {
-                val day = monday.plusDays(firstMax.index.toLong()).format(DateTimeFormatter.ofPattern("EEE, MMM d", Locale.ENGLISH))
-                "${if (partial) "Best known day" else "Best day"}: $day · ${duration(firstMax.value!!)}"
+            val message = if (firstMax == null) context.getString(com.aurikqq.noswidgets.R.string.widget_best_none) else {
+                val day = monday.plusDays(firstMax.index.toLong()).format(DateTimeFormatter.ofPattern("EEE, MMM d", resources.configuration.locales[0]))
+                "${if (partial) context.getString(com.aurikqq.noswidgets.R.string.widget_best_known) else context.getString(com.aurikqq.noswidgets.R.string.widget_best)}: $day · ${duration(firstMax.value!!)}"
             }
             text(canvas, message, 42f, 1120f, 26f, muted)
         }
         canvas.restore()
+    }
+
+    private fun duration(minutes: Long, compact: Boolean = false): String {
+        val hours = context.getString(com.aurikqq.noswidgets.R.string.widget_unit_h)
+        val mins = context.getString(com.aurikqq.noswidgets.R.string.widget_unit_m)
+        return if (compact) "${minutes / 60}$hours ${minutes % 60}$mins" else "${minutes / 60} $hours ${minutes % 60} $mins"
     }
 
     private fun drawChart(canvas: Canvas) {
@@ -137,8 +143,8 @@ internal class WeeklyAwayView(
                 if (date == selected) white else muted, bold = date == selected, align = Paint.Align.CENTER)
         }
         if (minutes.all { it == null }) {
-            text(canvas, "No away time data", 477f, 730f, 36f, white, align = Paint.Align.CENTER)
-            text(canvas, "No recorded observations for this week", 477f, 778f, 28f, muted, align = Paint.Align.CENTER)
+            text(canvas, context.getString(com.aurikqq.noswidgets.R.string.widget_no_history), 477f, 730f, 36f, white, align = Paint.Align.CENTER)
+            text(canvas, context.getString(com.aurikqq.noswidgets.R.string.widget_no_observations), 477f, 778f, 28f, muted, align = Paint.Align.CENTER)
         }
     }
 
@@ -186,6 +192,3 @@ internal class WeeklyAwayView(
         @Deprecated("Deprecated in Android") override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
     }
 }
-
-private fun duration(minutes: Long, compact: Boolean = false): String =
-    if (compact) "${minutes / 60}hr ${minutes % 60}min" else "${minutes / 60} hr ${minutes % 60} min"

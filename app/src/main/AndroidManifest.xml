@@ -11,11 +11,11 @@
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/></intent-filter>
         </activity>
         <activity android:name=".weekly.WeeklyAwayActivity" android:theme="@style/WeeklyAwayTheme" android:exported="false" />
-        <receiver android:name=".widget.AwayWidgetProvider" android:label="Away Time" android:exported="false">
+        <receiver android:name=".widget.AwayWidgetProvider" android:label="@string/widget_label_away" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/away_widget_info" />
         </receiver>
-        <receiver android:name=".widget.ScreenTimeWidgetProvider" android:label="Screen Time" android:exported="false">
+        <receiver android:name=".widget.ScreenTimeWidgetProvider" android:label="@string/widget_label_screen" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/screen_time_widget_info" />
         </receiver>

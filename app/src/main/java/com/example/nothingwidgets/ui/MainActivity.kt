@@ -84,44 +84,43 @@ class MainActivity : AppCompatActivity() {
         createUpdateBanner()
         val access = UsageSource(this).hasAccess()
         card(if (access) M.attr.colorSecondaryContainer else M.attr.colorTertiaryContainer) { box ->
-            label(box, if (access) "✓ Всё готово к работе" else "Разрешите доступ к статистике", 22f,
+            label(box, if (access) getString(com.aurikqq.noswidgets.R.string.loc_0) else getString(com.aurikqq.noswidgets.R.string.loc_1), 22f,
                 color(if (access) M.attr.colorOnSecondaryContainer else M.attr.colorOnTertiaryContainer))
-            label(box, "Данные остаются на телефоне. Доступ нужен для подсчёта времени в приложениях и перерывов.", 14f, color(if (access) M.attr.colorOnSecondaryContainer else M.attr.colorOnTertiaryContainer))
-            action(box, if (access) "Управлять доступом" else "Предоставить доступ", primary = !access) {
+            label(box, getString(com.aurikqq.noswidgets.R.string.loc_2), 14f, color(if (access) M.attr.colorOnSecondaryContainer else M.attr.colorOnTertiaryContainer))
+            action(box, if (access) getString(com.aurikqq.noswidgets.R.string.loc_3) else getString(com.aurikqq.noswidgets.R.string.loc_4), primary = !access) {
                 try { startActivity(UsageSource(this).permissionIntent()) }
-                catch (_: android.content.ActivityNotFoundException) { notice("Системный экран настроек недоступен.") }
+                catch (_: android.content.ActivityNotFoundException) { notice(getString(com.aurikqq.noswidgets.R.string.loc_5)) }
             }
         }
         card { box ->
-            label(box, "Добавить виджеты", 22f)
+            label(box, getString(com.aurikqq.noswidgets.R.string.loc_6), 22f)
             val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
             box.addView(row)
             action(row, "Away Time", weight = true) { pinWidget(com.aurikqq.noswidgets.widget.AwayWidgetProvider::class.java) }
             action(row, "Screen Time", weight = true) { pinWidget(com.aurikqq.noswidgets.widget.ScreenTimeWidgetProvider::class.java) }
+            label(box, getString(com.aurikqq.noswidgets.R.string.loc_7), 13f, color(M.attr.colorOnSurfaceVariant))
         }
         card { box ->
-            label(box, "Away Time", 25f)
-            label(box, "Расписание сна", 14f, color(M.attr.colorOnSurfaceVariant))
+            label(box, "Away Time", 22f)
             val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
             box.addView(row)
-            action(row, "Сон\n${format(settings.sleepStartMinute)}", weight = true) { timePicker(settings.sleepStartMinute) { settings.sleepStartMinute = it; changed() } }
-            action(row, "Пробуждение\n${format(settings.sleepEndMinute)}", weight = true) { timePicker(settings.sleepEndMinute) { settings.sleepEndMinute = it; changed() } }
-            label(box, "Новый день начинается после пробуждения.", 13f, color(M.attr.colorOnSurfaceVariant))
+            action(row, "${getString(com.aurikqq.noswidgets.R.string.sleep)}\n${format(settings.sleepStartMinute)}", weight = true) { timePicker(settings.sleepStartMinute) { settings.sleepStartMinute = it; changed() } }
+            action(row, "${getString(com.aurikqq.noswidgets.R.string.wake)}\n${format(settings.sleepEndMinute)}", weight = true) { timePicker(settings.sleepEndMinute) { settings.sleepEndMinute = it; changed() } }
+            label(box, getString(com.aurikqq.noswidgets.R.string.loc_8), 13f, color(M.attr.colorOnSurfaceVariant))
         }
         card { box ->
-            label(box, "Screen Time", 25f)
-            label(box, "Ваш ежедневный ориентир", 14f, color(M.attr.colorOnSurfaceVariant))
+            label(box, "Screen Time", 22f)
             val limit = if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) settings.limitMinutes else settings.limitForWidget(widgetId)
-            action(box, "${limit / 60} ч ${limit % 60} мин   ·   Изменить лимит", primary = true) { changeLimit(limit) }
-            label(box, "Пролистните виджет вниз, чтобы увидеть экранное время.", 13f, color(M.attr.colorOnSurfaceVariant))
+            action(box, getString(com.aurikqq.noswidgets.R.string.limit_button, limit / 60, limit % 60), primary = true) { changeLimit(limit) }
+            label(box, getString(com.aurikqq.noswidgets.R.string.loc_9), 13f, color(M.attr.colorOnSurfaceVariant))
         }
         card { box ->
-            action(box, "Проверить обновления") { UpdateController.checkManual(this) }
-            action(box, "Уведомления об обновлениях") { UpdateController.explainAndRequestNotifications(this) }
-            action(box, "Диагностика расчёта") { diagnostics() }
-            label(box, "Версия ${packageManager.getPackageInfo(packageName, 0).versionName} · Android 12+\nAndroid может откладывать фоновые обновления.", 12f, color(M.attr.colorOnSurfaceVariant))
+            listItem(box, com.aurikqq.noswidgets.R.drawable.ic_update, getString(com.aurikqq.noswidgets.R.string.loc_10), getString(com.aurikqq.noswidgets.R.string.loc_11)) { UpdateController.checkManual(this) }
+            listItem(box, com.aurikqq.noswidgets.R.drawable.ic_notifications, getString(com.aurikqq.noswidgets.R.string.loc_12), getString(com.aurikqq.noswidgets.R.string.loc_13), if (UpdateController.notificationsAllowed(this)) getString(com.aurikqq.noswidgets.R.string.loc_14) else getString(com.aurikqq.noswidgets.R.string.loc_15)) { UpdateController.explainAndRequestNotifications(this) }
+            listItem(box, com.aurikqq.noswidgets.R.drawable.ic_diagnostics, getString(com.aurikqq.noswidgets.R.string.loc_16), getString(com.aurikqq.noswidgets.R.string.loc_17)) { diagnostics() }
+            label(box, getString(com.aurikqq.noswidgets.R.string.app_version, packageManager.getPackageInfo(packageName, 0).versionName), 12f, color(M.attr.colorOnSurfaceVariant))
         }
-        if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) action(root, "Готово", primary = true) {
+        if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) action(root, getString(com.aurikqq.noswidgets.R.string.loc_18), primary = true) {
             updateWidgets(this)
             setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)); finish()
         }
@@ -131,11 +130,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun createUpdateBanner() {
         updateCard = card(M.attr.colorPrimaryContainer) { box ->
-            updateTitle = label(box, "Обновление", 22f, color(M.attr.colorOnPrimaryContainer))
+            updateTitle = label(box, getString(com.aurikqq.noswidgets.R.string.loc_19), 22f, color(M.attr.colorOnPrimaryContainer))
             updateMessage = label(box, "", 14f, color(M.attr.colorOnPrimaryContainer))
             updateProgress = LinearProgressIndicator(this).apply { max = 100 }
             box.addView(updateProgress, LinearLayout.LayoutParams(-1, dp(6)).apply { topMargin = dp(8); bottomMargin = dp(8) })
-            updateAction = action(box, "Скачать", primary = true) {
+            updateAction = action(box, getString(com.aurikqq.noswidgets.R.string.loc_20), primary = true) {
                 val current = UpdateController.getState()
                 if (current.readyToInstall) UpdateController.install(this)
                 else if (current.tag.isNullOrBlank()) UpdateController.checkManual(this)
@@ -153,35 +152,40 @@ class MainActivity : AppCompatActivity() {
     private fun renderUpdate(state: UpdateController.UiState) {
         if (!::updateCard.isInitialized) return
         updateCard.visibility = if (state.visible) View.VISIBLE else View.GONE
-        updateTitle.text = if (state.readyToInstall) "Обновление готово" else if (state.tag.isNullOrBlank()) "Обновления" else "Новая версия ${state.tag}"
+        updateTitle.text = if (state.readyToInstall) getString(com.aurikqq.noswidgets.R.string.loc_21) else if (state.tag.isNullOrBlank()) getString(com.aurikqq.noswidgets.R.string.loc_22) else getString(com.aurikqq.noswidgets.R.string.new_version, state.tag)
         updateMessage.text = state.message
         updateProgress.visibility = if (state.downloading || state.checking) View.VISIBLE else View.GONE
         updateProgress.isIndeterminate = state.progress < 0
         if (state.progress >= 0) updateProgress.setProgressCompat(state.progress, true)
         updateAction.visibility = if (state.checking || state.downloading) View.GONE else View.VISIBLE
-        updateAction.text = if (state.readyToInstall) "Установить" else if (state.tag.isNullOrBlank()) "Проверить снова" else "Скачать обновление"
-        updateNotes.text = if (state.notes.isNullOrBlank()) "" else "Что нового\n${state.notes}"
+        updateAction.text = if (state.readyToInstall) getString(com.aurikqq.noswidgets.R.string.loc_23) else if (state.tag.isNullOrBlank()) getString(com.aurikqq.noswidgets.R.string.loc_24) else getString(com.aurikqq.noswidgets.R.string.loc_25)
+        updateNotes.text = if (state.notes.isNullOrBlank()) "" else "${getString(com.aurikqq.noswidgets.R.string.whats_new)}\n${state.notes}"
         updateNotes.visibility = if (state.notes.isNullOrBlank()) View.GONE else View.VISIBLE
     }
 
     private fun changeLimit(current: Int) {
-        val fields = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(dp(24), 0, dp(24), 0) }
+        val fields = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(24), 0, dp(24), 0) }
         fun field(hintText: String, value: Int): EditText = EditText(this).apply {
             hint = hintText; inputType = InputType.TYPE_CLASS_NUMBER; setText(value.toString())
             contentDescription = hintText
-            fields.addView(this, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            fields.addView(this, LinearLayout.LayoutParams(dp(64), ViewGroup.LayoutParams.WRAP_CONTENT))
+            fields.addView(TextView(this@MainActivity).apply {
+                text = if (hintText == getString(com.aurikqq.noswidgets.R.string.loc_26)) getString(com.aurikqq.noswidgets.R.string.loc_28) else getString(com.aurikqq.noswidgets.R.string.loc_29)
+                textSize = 16f
+                setPadding(dp(6), 0, dp(18), 0)
+            })
         }
-        val hours = field("Часы", current / 60)
-        val minutes = field("Минуты", current % 60)
-        val dialog = MaterialAlertDialogBuilder(this).setTitle("Дневной лимит")
-            .setMessage("От 1 минуты до 24 часов").setView(fields).setNegativeButton("Отмена", null)
-            .setPositiveButton("Сохранить", null).create()
+        val hours = field(getString(com.aurikqq.noswidgets.R.string.loc_26), current / 60)
+        val minutes = field(getString(com.aurikqq.noswidgets.R.string.loc_27), current % 60)
+        val dialog = MaterialAlertDialogBuilder(this).setTitle(getString(com.aurikqq.noswidgets.R.string.loc_30))
+            .setMessage(getString(com.aurikqq.noswidgets.R.string.loc_31)).setView(fields).setNegativeButton(getString(com.aurikqq.noswidgets.R.string.loc_32), null)
+            .setPositiveButton(getString(com.aurikqq.noswidgets.R.string.loc_33), null).create()
         dialog.setOnShowListener {
             dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener {
                 val h = hours.text.toString().toIntOrNull()
                 val m = minutes.text.toString().toIntOrNull()
                 if (h == null || m == null || h !in 0..24 || m !in 0..59 || h * 60 + m !in 1..1440) {
-                    minutes.error = "Укажите от 1 минуты до 24 часов"
+                    minutes.error = getString(com.aurikqq.noswidgets.R.string.loc_34)
                 } else {
                     val total = h * 60 + m
                     if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) settings.limitMinutes = total else settings.setWidgetLimit(widgetId, total)
@@ -196,12 +200,12 @@ class MainActivity : AppCompatActivity() {
         val manager = AppWidgetManager.getInstance(this)
         try {
             if (!manager.isRequestPinAppWidgetSupported || !manager.requestPinAppWidget(ComponentName(this, provider), null, null)) {
-                notice("Этот рабочий стол не поддерживает добавление из приложения. Добавьте виджет через меню рабочего стола.")
+                notice(getString(com.aurikqq.noswidgets.R.string.loc_35))
             }
         } catch (_: IllegalStateException) {
-            notice("Не удалось открыть добавление виджета. Попробуйте через меню рабочего стола.")
+            notice(getString(com.aurikqq.noswidgets.R.string.loc_36))
         } catch (_: SecurityException) {
-            notice("Не удалось открыть добавление виджета. Попробуйте через меню рабочего стола.")
+            notice(getString(com.aurikqq.noswidgets.R.string.loc_36))
         }
     }
     private fun diagnostics() {
@@ -217,19 +221,19 @@ class MainActivity : AppCompatActivity() {
             val share = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_STREAM, uri)
-                clipData = android.content.ClipData.newRawUri("Диагностика", uri)
+                clipData = android.content.ClipData.newRawUri(getString(com.aurikqq.noswidgets.R.string.loc_37), uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            startActivity(Intent.createChooser(share, "Отправить диагностику"))
+            startActivity(Intent.createChooser(share, getString(com.aurikqq.noswidgets.R.string.loc_38)))
         } catch (_: java.io.IOException) {
-            notice("Не удалось создать файл диагностики. Проверьте доступное место и попробуйте снова.")
+            notice(getString(com.aurikqq.noswidgets.R.string.loc_39))
         } catch (_: android.content.ActivityNotFoundException) {
-            notice("Не найдено приложение для отправки файла.")
+            notice(getString(com.aurikqq.noswidgets.R.string.loc_40))
         } catch (_: IllegalArgumentException) {
-            notice("Не удалось подготовить файл диагностики.")
+            notice(getString(com.aurikqq.noswidgets.R.string.loc_41))
         }
     }
-    private fun notice(message: String) { MaterialAlertDialogBuilder(this).setMessage(message).setPositiveButton("ОК", null).show() }
+    private fun notice(message: String) { MaterialAlertDialogBuilder(this).setMessage(message).setPositiveButton(getString(com.aurikqq.noswidgets.R.string.loc_42), null).show() }
     private fun changed() { updateWidgets(this); buildUi() }
     private fun timePicker(current: Int, save: (Int) -> Unit) { TimePickerDialog(this, { _, h, m -> save(h * 60 + m) }, current / 60, current % 60, true).show() }
     private fun format(minutes: Int) = "%02d:%02d".format(minutes / 60, minutes % 60)
@@ -246,6 +250,24 @@ class MainActivity : AppCompatActivity() {
         root.addView(card, LinearLayout.LayoutParams(-1,-2).apply { topMargin = dp(16) })
         content(box)
         return card
+    }
+    private fun listItem(parent: LinearLayout, icon: Int, title: String, description: String, status: String? = null, click: () -> Unit) {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(4), dp(12), dp(4), dp(12)); isClickable = true; isFocusable = true
+            val out = android.util.TypedValue()
+            if (theme.resolveAttribute(android.R.attr.selectableItemBackground, out, true)) setBackgroundResource(out.resourceId)
+            setOnClickListener { click() }
+        }
+        row.addView(android.widget.ImageView(this).apply {
+            setImageResource(icon); setColorFilter(color(M.attr.colorOnSurfaceVariant)); contentDescription = null
+        }, LinearLayout.LayoutParams(dp(24), dp(24)).apply { marginEnd = dp(16) })
+        val texts = column(0)
+        texts.addView(TextView(this).apply { text = title; textSize = 16f; setTextColor(color(M.attr.colorOnSurface)) })
+        texts.addView(TextView(this).apply { text = description; textSize = 13f; setTextColor(color(M.attr.colorOnSurfaceVariant)); setPadding(0, dp(2), 0, 0) })
+        row.addView(texts, LinearLayout.LayoutParams(0, -2, 1f))
+        if (status != null) row.addView(TextView(this).apply { text = status; textSize = 13f; setTextColor(color(androidx.appcompat.R.attr.colorPrimary)) })
+        parent.addView(row, LinearLayout.LayoutParams(-1, -2))
     }
     private fun action(parent: LinearLayout, text: String, primary: Boolean = false, weight: Boolean = false, click: () -> Unit): MaterialButton {
         val style = if (primary) M.attr.materialButtonStyle else M.attr.materialButtonTonalStyle
